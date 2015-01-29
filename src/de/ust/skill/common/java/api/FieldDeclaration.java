@@ -1,5 +1,7 @@
 package de.ust.skill.common.java.api;
 
+import de.ust.skill.common.java.internal.SkillObject;
+
 /**
  * An abstract Field declaration, used for the runtime representation of types.
  * It can be used for reflective access of types.

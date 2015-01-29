@@ -3,6 +3,8 @@ package de.ust.skill.common.java.api;
 import java.nio.file.Path;
 import java.util.Iterator;
 
+import de.ust.skill.common.java.internal.SkillObject;
+
 /**
  * A SKilL file that can be used to access types stored in a skill file and
  * persist changes.

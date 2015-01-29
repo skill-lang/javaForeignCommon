@@ -3,6 +3,8 @@ package de.ust.skill.common.java.api;
 import java.util.Collection;
 import java.util.Iterator;
 
+import de.ust.skill.common.java.internal.SkillObject;
+
 public interface Access<T extends SkillObject> extends Collection<T> {
 
     /**

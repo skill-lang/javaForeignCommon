@@ -1,6 +1,5 @@
 package de.ust.skill.common.java.internal;
 
-import de.ust.skill.common.java.api.SkillObject;
 
 /**
  * Actual implementation as used by all bindings.
