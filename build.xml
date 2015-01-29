@@ -8,7 +8,7 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
     <property name="source" value="1.7"/>
-    <path id="jvmCommon.classpath">
+    <path id="javaCommon.classpath">
         <pathelement location="bin"/>
     </path>
     <target name="init">
