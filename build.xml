@@ -30,13 +30,13 @@
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
             <src path="src"/>
-            <classpath refid="jvmCommon.classpath"/>
+            <classpath refid="javaCommon.classpath"/>
         </javac>
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
 
   <target depends="build-project" name="build-jar">
-    <jar destfile="skill.jvm.common.jar"
+    <jar destfile="skill.java.common.jar"
       basedir="bin"
       includes=""
       excludes="">
