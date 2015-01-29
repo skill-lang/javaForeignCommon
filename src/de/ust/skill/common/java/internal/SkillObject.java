@@ -13,7 +13,11 @@ package de.ust.skill.common.java.internal;
 // TODO create a builder for skill objects
 public class SkillObject {
 
-    SkillObject(long skillID) {
+    /**
+     * The constructor is protected to ensure that users do not break states
+     * accidentally
+     */
+    protected SkillObject(long skillID) {
         this.skillID = skillID;
     }
 

@@ -1,23 +1,38 @@
 package de.ust.skill.common.java.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.FieldDeclaration;
 import de.ust.skill.common.java.api.SkillFile;
 
 /**
- * Toplevel implementation of all storage pools.
+ * Top level implementation of all storage pools.
  * 
  * @author Timm Felden
- * @param <T1>
- * @param <T2>
+ * @param <T>
+ *            static type of instances
+ * @param <B>
+ *            base type of this hierarchy
+ * @note Storage pools must be created in type order!
+ * @note We do not guarantee functional correctness if instances from multiple
+ *       skill files are mixed. Such usage will likely break at least one of the
+ *       files.
  */
 abstract public class StoragePool<T extends B, B extends SkillObject> extends FieldType<T> implements Access<T> {
 
     final String name;
     final StoragePool<? super T, B> superPool;
+    final BasePool<B> basePool;
+    final Set<String> knownFields;
+    /**
+     * @note the fieldIndex is either identical to the position in fields or it
+     *       is an auto field
+     */
+    final ArrayList<FieldDeclaration<?, T>> fields;
 
     @Override
     final public String name() {
@@ -31,10 +46,19 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         return null;
     }
 
-    StoragePool(long poolIndex, String name, StoragePool<? super T, B> superPool) {
+    /**
+     * @note the unchecked cast is required, because we can not supply this as
+     *       an argument in a super constructor, thus the base pool can not be
+     *       an argument to the constructor. The cast will never fail anyway.
+     */
+    @SuppressWarnings("unchecked")
+    StoragePool(long poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields) {
         super(32L + poolIndex);
         this.name = name;
         this.superPool = superPool;
+        this.basePool = null == superPool ? (BasePool<B>) this : superPool.basePool;
+        this.knownFields = knownFields;
+        fields = new ArrayList<>(1 + knownFields.size());
     }
 
     @Override
@@ -45,8 +69,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     @Override
     public boolean isEmpty() {
-        // TODO Auto-generated method stub
-        return false;
+        return size() != 0;
     }
 
     @Override
@@ -87,38 +110,44 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        // TODO Auto-generated method stub
-        return false;
+        for (Object i : c)
+            if (!contains(i))
+                return false;
+        return true;
     }
 
     @Override
     public boolean addAll(Collection<? extends T> c) {
-        // TODO Auto-generated method stub
-        return false;
+        boolean changed = false;
+        for (T i : c)
+            changed |= add(i);
+        return changed;
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        // TODO Auto-generated method stub
-        return false;
+        boolean changed = false;
+        for (Object i : c)
+            changed |= remove(i);
+        return changed;
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        // TODO Auto-generated method stub
-        return false;
+        // TODO provide an implementation that works for single state usage
+        // scenario
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
-
+        // TODO there are more efficient implementations then that
+        removeAll(this);
     }
 
     @Override
     public SkillFile owner() {
-        // TODO Auto-generated method stub
-        return null;
+        return basePool.owner();
     }
 
     @Override
