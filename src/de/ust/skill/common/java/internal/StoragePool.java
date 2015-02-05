@@ -91,7 +91,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public <T> T[] toArray(T[] a) {
+    public <U> U[] toArray(U[] a) {
         // TODO Auto-generated method stub
         return null;
     }
