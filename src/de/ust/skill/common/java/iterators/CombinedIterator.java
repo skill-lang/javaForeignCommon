@@ -14,9 +14,10 @@ public class CombinedIterator<T> implements Iterator<T> {
     /**
      * iterator list is linked to allow for gc of unused iterators
      */
-    private LinkedList<Iterator<T>> is;
+    private LinkedList<Iterator<? extends T>> is;
 
-    public CombinedIterator(Iterator<T>... is) {
+    @SafeVarargs
+    public CombinedIterator(Iterator<? extends T>... is) {
         this.is = new LinkedList<>(Arrays.asList(is));
     }
 
