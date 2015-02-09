@@ -18,8 +18,8 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      */
     private SkillFile owner = null;
 
-    BasePool(long poolIndex, String name, StoragePool<? super T, T> superPool, Set<String> knownFields) {
-        super(poolIndex, name, superPool, knownFields);
+    public BasePool(long poolIndex, String name, Set<String> knownFields) {
+        super(poolIndex, name, null, knownFields);
     }
 
     @Override

@@ -24,6 +24,28 @@ import de.ust.skill.common.java.api.SkillFile;
  */
 abstract public class StoragePool<T extends B, B extends SkillObject> extends FieldType<T> implements Access<T> {
 
+    /**
+     * Builder for new instances of the pool.
+     * 
+     * @author Timm Felden
+     * @todo revisit implementation after the pool is completely implemented.
+     *       Having an instance as constructor argument is questionable.
+     */
+    protected static abstract class Builder<T> {
+        protected StoragePool<T, ? super T> pool;
+        protected T instance;
+
+        protected Builder(StoragePool<T, ? super T> pool, T instance) {
+            this.pool = pool;
+            this.instance = instance;
+        }
+
+        public T make() {
+            pool.add(instance);
+            return instance;
+        }
+    }
+
     final String name;
     final StoragePool<? super T, B> superPool;
     final BasePool<B> basePool;

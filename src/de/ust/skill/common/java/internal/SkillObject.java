@@ -82,6 +82,14 @@ public class SkillObject {
         return field.getR(this);
     }
 
+    /**
+     * potentially expensive but more pretty representation of this instance.
+     */
+    public String prettyString() {
+        StringBuilder sb = new StringBuilder("SkillObject(this: ").append(this);
+        return sb.append(")").toString();
+    }
+
     public static final class SubType extends SkillObject implements NamedType {
         private final StoragePool<?, ?> τPool;
 

@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.api;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Iterator;
 
@@ -22,6 +23,50 @@ public interface SkillFile {
     }
 
     /**
+     * Actual mode after processing.
+     * 
+     * @author Timm Felden
+     */
+    static class ActualMode {
+        public final Mode open;
+        public final Mode close;
+
+        public ActualMode(Mode... modes) throws IOException {
+            // determine open mode
+            // @note read is preferred over create, because empty files are
+            // legal and the file has been created by now if it did not exist
+            // yet
+            // @note write is preferred over append, because usage is more
+            // inuitive
+            Mode openMode = null, closeMode = null;
+            for (Mode m : modes)
+                switch (m) {
+                case Create:
+                case Read:
+                    if (null == openMode)
+                        openMode = m;
+                    else if (openMode != m)
+                        throw new IOException("You can either create or read a file.");
+                    break;
+                case Append:
+                case Write:
+                    if (null == closeMode)
+                        closeMode = m;
+                    else if (closeMode != m)
+                        throw new IOException("You can either write or append to a file.");
+                    break;
+                }
+            if (null == openMode)
+                openMode = Mode.Read;
+            if (null == closeMode)
+                closeMode = Mode.Write;
+
+            this.open = openMode;
+            this.close = closeMode;
+        }
+    }
+
+    /**
      * @return access to known strings
      */
     public StringAccess Strings();
@@ -29,7 +74,7 @@ public interface SkillFile {
     /**
      * @return iterator over all user types
      */
-    public Iterator<Access<? extends SkillObject>> all();
+    public Iterator<Access<? extends SkillObject>> allTypes();
 
     /**
      * Set a new path for the file. This will influence the next flush/close
