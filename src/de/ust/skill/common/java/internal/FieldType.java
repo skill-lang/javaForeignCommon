@@ -1,5 +1,7 @@
 package de.ust.skill.common.java.internal;
 
+import de.ust.skill.common.jvm.streams.InStream;
+
 /**
  * Top level implementation of a field type, the runtime representation of a
  * fields type.
@@ -14,7 +16,7 @@ abstract public class FieldType<T> {
 
     final long typeID;
 
-    FieldType(long typeID) {
+    protected FieldType(long typeID) {
         this.typeID = typeID;
     }
 
@@ -26,7 +28,16 @@ abstract public class FieldType<T> {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return (int) typeID;
     }
+
+    /**
+     * Takes one T out of the stream.
+     *
+     * @note this function has to be implemented by FieldTypes because of limits
+     *       of the Java type system (and any other sane type system)
+     * @note intended for internal usage only!
+     */
+    public abstract T readSingleField(InStream in);
 }
