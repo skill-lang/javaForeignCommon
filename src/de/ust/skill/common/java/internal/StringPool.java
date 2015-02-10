@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -61,9 +62,44 @@ public class StringPool implements StringAccess {
     }
 
     @Override
+    public String get(long index) {
+        if (0L == index)
+            return null;
+
+        String result;
+        try {
+            result = idMap.get((int) index);
+        } catch (IndexOutOfBoundsException e) {
+            throw new InvalidPoolIndexException(index, stringPositions.size(), "string");
+        }
+        if (null != result)
+            return result;
+
+        // we have to load the string from disk
+        // @note this block has to be synchronized in order to enable parallel
+        // decoding of field data
+        // @note this is correct, because string pool is the only one who can do
+        // parallel operations on input!
+        synchronized (this) {
+            Position off = stringPositions.get((int) index);
+            input.push(off.absoluteOffset);
+            byte[] chars = input.bytes(off.length);
+            input.pop();
+
+            try {
+                result = new String(chars, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                // as if that would ever happen
+                e.printStackTrace();
+            }
+            idMap.set((int) index, result);
+        }
+        return result;
+    }
+
+    @Override
     public boolean isEmpty() {
-        // TODO Auto-generated method stub
-        return false;
+        return size() == 0;
     }
 
     @Override
@@ -129,12 +165,6 @@ public class StringPool implements StringAccess {
     public void clear() {
         // TODO Auto-generated method stub
 
-    }
-
-    @Override
-    public String get(long index) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }
