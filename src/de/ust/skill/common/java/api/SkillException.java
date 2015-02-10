@@ -5,7 +5,7 @@ package de.ust.skill.common.java.api;
  * 
  * @author Timm Felden
  */
-public class SkillException extends Exception {
+public class SkillException extends RuntimeException {
 
     public SkillException() {
     }
