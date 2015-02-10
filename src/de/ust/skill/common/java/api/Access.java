@@ -29,5 +29,5 @@ public interface Access<T extends SkillObject> extends Collection<T> {
      */
     public Iterator<T> typeOrderIterator();
 
-    public Iterator<FieldDeclaration<?, T>> fields();
+    public Iterator<? extends FieldDeclaration<?, T>> fields();
 }

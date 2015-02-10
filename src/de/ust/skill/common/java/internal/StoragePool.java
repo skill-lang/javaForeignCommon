@@ -6,8 +6,10 @@ import java.util.Iterator;
 import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
-import de.ust.skill.common.java.api.FieldDeclaration;
 import de.ust.skill.common.java.api.SkillFile;
+import de.ust.skill.common.java.internal.FieldTypes.ReferenceType;
+import de.ust.skill.common.java.internal.parts.Block;
+import de.ust.skill.common.jvm.streams.InStream;
 
 /**
  * Top level implementation of all storage pools.
@@ -22,7 +24,8 @@ import de.ust.skill.common.java.api.SkillFile;
  *       skill files are mixed. Such usage will likely break at least one of the
  *       files.
  */
-abstract public class StoragePool<T extends B, B extends SkillObject> extends FieldType<T> implements Access<T> {
+abstract public class StoragePool<T extends B, B extends SkillObject> extends FieldType<T> implements Access<T>,
+        ReferenceType {
 
     /**
      * Builder for new instances of the pool.
@@ -56,6 +59,11 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     final ArrayList<FieldDeclaration<?, T>> fields;
 
+    /**
+     * The block layout of instances of this pool.
+     */
+    ArrayList<Block> blocks = new ArrayList<>();
+
     @Override
     final public String name() {
         return name;
@@ -83,10 +91,31 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         fields = new ArrayList<>(1 + knownFields.size());
     }
 
+    /**
+     * @return the instance matching argument skill id
+     */
+    public abstract T getByID(long index);
+
+    @Override
+    public final T readSingleField(InStream in) {
+        return getByID(in.v64());
+    }
+
+    /**
+     * @return size including subtypes
+     */
     @Override
     public int size() {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    /**
+     * @return size excluding subtypes
+     */
+    int staticSize() {
+        // TODO implementation required
+        return -1;
     }
 
     @Override
@@ -179,9 +208,8 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public Iterator<FieldDeclaration<?, T>> fields() {
-        // TODO Auto-generated method stub
-        return null;
+    public Iterator<? extends de.ust.skill.common.java.api.FieldDeclaration<?, T>> fields() {
+        return fields.iterator();
     }
 
 }

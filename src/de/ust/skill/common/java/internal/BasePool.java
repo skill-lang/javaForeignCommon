@@ -14,6 +14,11 @@ import de.ust.skill.common.java.api.SkillFile;
 public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
 
     /**
+     * instances read from disk
+     */
+    T[] data;
+
+    /**
      * the owner is set once by the SkillState.finish method!
      */
     private SkillFile owner = null;
@@ -32,5 +37,13 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
         assert null != owner : "owner can not be null";
         this.owner = owner;
 
+    }
+
+    @SuppressWarnings("null")
+    @Override
+    public T getByID(long index) {
+        if (0 == index)
+            return null;
+        return data[(int) index - 1];
     }
 }
