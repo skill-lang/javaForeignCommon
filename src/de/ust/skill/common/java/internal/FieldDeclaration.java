@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.internal;
 
+import de.ust.skill.common.java.internal.parts.SimpleChunk;
 
 /**
  * Actual implementation as used by all bindings.
@@ -65,5 +66,10 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
     @Override
     public int hashCode() {
         return type.hashCode() ^ name.hashCode();
+    }
+
+    public void addChunk(SimpleChunk simpleChunk) {
+        // TODO Auto-generated method stub
+        throw new Error("todo");
     }
 }

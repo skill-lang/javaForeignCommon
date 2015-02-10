@@ -1,7 +1,12 @@
 package age.internal;
 
+import java.util.HashSet;
+
 import de.ust.skill.common.java.api.SkillFile.Mode;
 import de.ust.skill.common.java.internal.ParseException;
+import de.ust.skill.common.java.internal.SkillObject;
+import de.ust.skill.common.java.internal.StoragePool;
+import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
 
 final public class FileParser extends de.ust.skill.common.java.internal.FileParser<SkillState> {
@@ -28,6 +33,13 @@ final public class FileParser extends de.ust.skill.common.java.internal.FilePars
     public static SkillState read(FileInputStream in, Mode writeMode) throws ParseException {
         de.ust.skill.common.java.internal.FileParser<SkillState> p = new FileParser(in, writeMode);
         // TODO make
+        throw new Error("TODO");
+    }
+
+    @Override
+    protected <T extends B, B extends SkillObject> StoragePool<T, B> newPool(String name,
+            StoragePool<? super T, B> superPool, HashSet<TypeRestriction> restrictions) {
+        // TODO Auto-generated method stub
         throw new Error("TODO");
     }
 }
