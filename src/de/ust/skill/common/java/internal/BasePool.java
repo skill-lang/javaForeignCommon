@@ -33,7 +33,10 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
         return owner;
     }
 
-    void setOwner(SkillFile owner) {
+    /**
+     * can only be invoked once by the skill state constructor!
+     */
+    public void setOwner(SkillFile owner) {
         assert null == this.owner : "owner can only be set once";
         assert null != owner : "owner can not be null";
         this.owner = owner;

@@ -1,4 +1,4 @@
-package age.api;
+package age.internal;
 
 import java.util.Arrays;
 import java.util.HashSet;

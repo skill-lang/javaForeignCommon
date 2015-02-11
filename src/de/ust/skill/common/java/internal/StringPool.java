@@ -48,7 +48,10 @@ public class StringPool implements StringAccess {
      */
     final ArrayList<String> idMap;
 
-    StringPool(FileInputStream input) {
+    /**
+     * DO NOT CALL IF YOU ARE NOT GENERATED OR INTERNAL CODE!
+     */
+    public StringPool(FileInputStream input) {
         this.input = input;
         stringPositions = new ArrayList<>();
         stringPositions.add(new Position(-1L, -1));

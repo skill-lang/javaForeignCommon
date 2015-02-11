@@ -55,7 +55,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     final String name;
     final StoragePool<? super T, B> superPool;
     final BasePool<B> basePool;
-    final Set<String> knownFields;
+    public final Set<String> knownFields;
     /**
      * @note the fieldIndex is either identical to the position in fields or it
      *       is an auto field
@@ -154,8 +154,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     @Override
     public Iterator<T> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        throw new Error("TODO");
     }
 
     @Override
@@ -231,8 +230,8 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public Iterator<? extends de.ust.skill.common.java.api.FieldDeclaration<?, T>> fields() {
-        return fields.iterator();
+    public Iterable<? extends de.ust.skill.common.java.api.FieldDeclaration<?, T>> fields() {
+        return fields;
     }
 
     /**
@@ -245,10 +244,17 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     <R> FieldDeclaration<R, T> addField(int ID, FieldType<R> type, String name,
             HashSet<FieldRestriction<?>> restrictions) {
         FieldDeclaration<R, T> f = new LazyField<R, T>(type, name, ID, this);
-        for(FieldRestriction<?> r : restrictions)
+        for (FieldRestriction<?> r : restrictions)
             f.addRestriction(r);
         fields.add(f);
         return f;
 
+    }
+
+    /**
+     * used internally for state allocation
+     */
+    public void addKnownField(String name) {
+        // Arbitrary storage pools know no fields!
     }
 }
