@@ -1,5 +1,6 @@
 package age;
 
+import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.NamedType;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
@@ -58,6 +59,23 @@ public class Age extends SkillObject {
      */
     public void setAge(long age) {
         this.age = age;
+    }
+
+    /**
+     * unchecked conversions are required, because the Java type system known
+     * nothing of our invariants
+     * 
+     * @note to self: Boxing bei primitiven beachten!
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T get(FieldDeclaration<T, ?> field) {
+        switch (field.name()) {
+        case "age":
+            return (T) (Long) age;
+        default:
+            return super.get(field);
+        }
     }
 
     /**
