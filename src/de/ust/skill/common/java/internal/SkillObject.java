@@ -77,9 +77,15 @@ public class SkillObject {
      *            pools iterator
      * @note if field is not a distributed field of this type, then anything may
      *       happen
+     * @note the second type parameter of field has to be this.type.
+     *       Unfortunately Java wont let us override the type parameter on each
+     *       overload, although this pattern would automagically make everything
+     *       work as intended and the user would always know whether using a
+     *       field declaration on a specific instance would work well.
      */
-    public <T> T get(FieldDeclaration<T, ? super SkillObject> field) {
-        return field.getR(this);
+    @SuppressWarnings("unchecked")
+    public <T> T get(FieldDeclaration<T, ?> field) {
+        return ((FieldDeclaration<T, SkillObject>) field).getR(this);
     }
 
     /**

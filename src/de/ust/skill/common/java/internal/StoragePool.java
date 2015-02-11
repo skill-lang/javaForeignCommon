@@ -2,6 +2,7 @@ package de.ust.skill.common.java.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -9,6 +10,8 @@ import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillFile;
 import de.ust.skill.common.java.internal.FieldTypes.ReferenceType;
 import de.ust.skill.common.java.internal.parts.Block;
+import de.ust.skill.common.java.iterators.CombinedIterator;
+import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.InStream;
 
 /**
@@ -64,6 +67,34 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     ArrayList<Block> blocks = new ArrayList<>();
 
+    /**
+     * All stored objects, which have exactly the type T. Objects are stored as
+     * arrays of field entries. The types of the respective fields can be
+     * retrieved using the fieldTypes map.
+     */
+    final ArrayList<T> newObjects = new ArrayList<>();
+
+    // TODO protected def newDynamicInstances : Iterator[T] =
+    // subPools.foldLeft(newObjects.iterator)(_ ++ _.newDynamicInstances)
+
+    /**
+     * the number of instances of exactly this type, excluding sub-types
+     * 
+     * @return size excluding subtypes
+     */
+    final public long staticSize() {
+        return staticData.size() + newObjects.size();
+    }
+
+    final Iterator<T> staticInstances() {
+        return new CombinedIterator<T>(staticData.iterator(), newObjects.iterator());
+    }
+
+    /**
+     * the number of static instances loaded from the file
+     */
+    final protected ArrayList<T> staticData = new ArrayList<>();
+
     @Override
     final public String name() {
         return name;
@@ -108,14 +139,6 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     public int size() {
         // TODO Auto-generated method stub
         return 0;
-    }
-
-    /**
-     * @return size excluding subtypes
-     */
-    int staticSize() {
-        // TODO implementation required
-        return -1;
     }
 
     @Override
@@ -212,4 +235,20 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         return fields.iterator();
     }
 
+    /**
+     * insert a new T with default values and the given skillID into the pool
+     *
+     * @note implementation relies on an ascending order of insertion
+     */
+    abstract boolean insertInstance(int skillID);
+
+    <R> FieldDeclaration<R, T> addField(int ID, FieldType<R> type, String name,
+            HashSet<FieldRestriction<?>> restrictions) {
+        FieldDeclaration<R, T> f = new LazyField<R, T>(type, name, ID, this);
+        for(FieldRestriction<?> r : restrictions)
+            f.addRestriction(r);
+        fields.add(f);
+        return f;
+
+    }
 }

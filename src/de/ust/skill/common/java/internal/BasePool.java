@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.internal;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import de.ust.skill.common.java.api.SkillFile;
@@ -45,5 +46,28 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
         if (0 == index)
             return null;
         return data[(int) index - 1];
+    }
+
+    /**
+     * increase size of data array. Invoked by file parser only!
+     */
+    void resizeData(int increase) {
+        data = Arrays.copyOf(data, data.length + increase);
+    }
+
+    /**
+     * Static instances of base pool deal with unknown types only!
+     */
+    @Override
+    boolean insertInstance(int skillID) {
+        int i = skillID - 1;
+        if (null != data[i])
+            return false;
+
+        @SuppressWarnings("unchecked")
+        T r = (T) (new SkillObject.SubType(this, skillID));
+        data[i] = r;
+        staticData.add(r);
+        return true;
     }
 }

@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Stack;
 
 import de.ust.skill.common.java.internal.FieldTypes.Annotation;
 import de.ust.skill.common.java.internal.FieldTypes.BoolType;
+import de.ust.skill.common.java.internal.FieldTypes.CompoundType;
 import de.ust.skill.common.java.internal.FieldTypes.ConstantI16;
 import de.ust.skill.common.java.internal.FieldTypes.ConstantI32;
 import de.ust.skill.common.java.internal.FieldTypes.ConstantI64;
@@ -21,6 +23,7 @@ import de.ust.skill.common.java.internal.FieldTypes.I64;
 import de.ust.skill.common.java.internal.FieldTypes.I8;
 import de.ust.skill.common.java.internal.FieldTypes.ListType;
 import de.ust.skill.common.java.internal.FieldTypes.MapType;
+import de.ust.skill.common.java.internal.FieldTypes.ReferenceType;
 import de.ust.skill.common.java.internal.FieldTypes.SetType;
 import de.ust.skill.common.java.internal.FieldTypes.StringType;
 import de.ust.skill.common.java.internal.FieldTypes.V64;
@@ -221,20 +224,23 @@ public abstract class FileParser<State extends SkillState> {
             switch (id) {
 
             case 0:
-                // TODO check that t is a reference type
-                rval.add(NonNull.get());
+                if (t instanceof ReferenceType)
+                    rval.add(NonNull.get());
+                else
+                    throw new ParseException(in, blockCounter, null, "Nonnull restriction on non-refernce type: %s.",
+                            t.toString());
                 break;
 
             case 3:
                 // TODO provide translation
                 // t match {
-                // case I8 ⇒ restrictions.Range(in.i8, in.i8)
-                // case I16 ⇒ restrictions.Range(in.i16, in.i16)
-                // case I32 ⇒ restrictions.Range(in.i32, in.i32)
-                // case I64 ⇒ restrictions.Range(in.i64, in.i64)
-                // case V64 ⇒ restrictions.Range(in.v64, in.v64)
-                // case F32 ⇒ restrictions.Range(in.f32, in.f32)
-                // case F64 ⇒ restrictions.Range(in.f64, in.f64)
+                // case I8 ⇒ Range.make(in.i8, in.i8)
+                // case I16 ⇒ Range.make(in.i16, in.i16)
+                // case I32 ⇒ Range.make(in.i32, in.i32)
+                // case I64 ⇒ Range.make(in.i64, in.i64)
+                // case V64 ⇒ Range.make(in.v64, in.v64)
+                // case F32 ⇒ Range.make(in.f32, in.f32)
+                // case F64 ⇒ Range.make(in.f64, in.f64)
                 // case t ⇒ throw new ParseException(in, blockCounter,
                 // s"Type $t can not be range restricted!", null)
                 // }
@@ -354,67 +360,59 @@ public abstract class FileParser<State extends SkillState> {
             typeDefinition();
 
         // update status
+        resizePools();
+        // insert fields
+        for (InsertionEntry e : fieldInsertionQueue)
+            e.owner.addField(e.ID, eliminatePreliminaryTypesIn(e.type), e.name, e.restrictions).addChunk(e.bci);
+
         throw new Error("todo");
-        // resizePools();
-        // insertFields();
         // processFieldData();
     }
 
-    // static {
-    //
-    //
-    // @inline def typeDefinition[T <: B, B <: SkillType]
-    // @inline def resizePools {
-    // val resizeStack = new Stack[StoragePool[_ <: SkillType, _ <: SkillType]]
-    // // resize base pools and push entries to stack
-    // for (p ← resizeQueue) {
-    // p match {
-    // case p : BasePool[_] ⇒ p.resizeData(p.blockInfos.last.count.toInt)
-    // case _ ⇒
-    // }
-    // resizeStack.push(p)
-    // }
-    //
-    // // create instances from stack
-    // for (p ← resizeStack) {
-    // val bi = p.blockInfos.last
-    // var i = bi.bpo
-    // val high = bi.bpo + bi.count
-    // while (i < high && p.insertInstance(i + 1))
-    // i += 1;
-    // }
-    // }
-    // @inline def insertFields {
-    // for ((p, id, t, rs, name, block) ← fieldInsertionQueue) {
-    // p.addField(id, eliminatePreliminaryTypesIn(t), name, rs).addChunk(block)
-    // }
-    // }
-    // @inline def eliminatePreliminaryTypesIn[T](t : FieldType[T]) :
-    // FieldType[T] = t match {
-    // case TypeDefinitionIndex(i) ⇒ try {
-    // types(i.toInt).asInstanceOf[FieldType[T]]
-    // } catch {
-    // case e : Exception ⇒ throw ParseException(in, blockCounter,
-    // s"inexistent user type $i (user types: ${
-    // types.zipWithIndex.map(_.swap).toMap.mkString
-    // })", e)
-    // }
-    // case TypeDefinitionName(n) ⇒ try {
-    // poolByName(n).asInstanceOf[FieldType[T]]
-    // } catch {
-    // case e : Exception ⇒ throw ParseException(in, blockCounter,
-    // s"inexistent user type $n (user types: ${poolByName.mkString})", e)
-    // }
-    // case ConstantLengthArray(l, t) ⇒ ConstantLengthArray(l,
-    // eliminatePreliminaryTypesIn(t))
-    // case VariableLengthArray(t) ⇒
-    // VariableLengthArray(eliminatePreliminaryTypesIn(t))
-    // case ListType(t) ⇒ ListType(eliminatePreliminaryTypesIn(t))
-    // case SetType(t) ⇒ SetType(eliminatePreliminaryTypesIn(t))
-    // case MapType(k, v) ⇒ MapType(eliminatePreliminaryTypesIn(k),
-    // eliminatePreliminaryTypesIn(v))
-    // case t ⇒ t
-    // }
+    private final void resizePools() {
+        Stack<StoragePool<?, ?>> resizeStack = new Stack<>();
+
+        // resize base pools and push entries to stack
+        for (StoragePool<?, ?> p : resizeQueue) {
+            if (p instanceof BasePool<?>) {
+                final ArrayList<Block> bs = p.blocks;
+                final Block last = bs.get(bs.size() - 1);
+                ((BasePool<?>) p).resizeData((int) last.count);
+            }
+            resizeStack.push(p);
+        }
+
+        // create instances from stack
+        for (StoragePool<?, ?> p : resizeStack) {
+            final ArrayList<Block> bs = p.blocks;
+            final Block last = bs.get(bs.size() - 1);
+            int i = (int) last.bpo;
+            int high = (int) (last.bpo + last.count);
+            while (i < high && p.insertInstance(i + 1))
+                i += 1;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private final <T> FieldType<T> eliminatePreliminaryTypesIn(FieldType<T> t) {
+        // user types
+        final int typeID = (int) t.typeID;
+        if (typeID >= 32) {
+            if (t instanceof TypeDefinitionIndex<?>)
+                try {
+                    return (FieldType<T>) types.get(typeID - 32);
+                } catch (Exception e) {
+                    throw new ParseException(in, blockCounter, e, "inexistent user type %d (user types: %s)", typeID,
+                            poolByName.keySet().toString());
+                }
+            return t;
+        }
+
+        // builtins
+        if (t instanceof CompoundType<?>)
+            return ((CompoundType<T>) t).eliminatePreliminaryBaseType(types);
+        return t;
+    }
     // @inline def processFieldData {
     // // we have to add the file offset to all begins and ends we encounter
     // val fileOffset = in.position

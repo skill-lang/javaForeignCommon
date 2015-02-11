@@ -28,7 +28,7 @@ public interface FieldDeclaration<T, Obj extends SkillObject> {
     /**
      * Generic getter for an object.
      */
-    public T getR(Obj object);
+    public T getR(Obj ref);
 
-    public void setR(Obj object, T value);
+    public void setR(Obj ref, T value);
 }
