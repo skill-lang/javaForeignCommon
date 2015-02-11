@@ -18,5 +18,5 @@ public abstract class CompoundType<T> extends FieldType<T> {
     /**
      * used for state construction only!
      */
-    public abstract CompoundType<T> eliminatePreliminaryBaseType(ArrayList<StoragePool<?, ?>> types);
+    public abstract CompoundType<T> eliminatePreliminaryTypes(ArrayList<StoragePool<?, ?>> types);
 }

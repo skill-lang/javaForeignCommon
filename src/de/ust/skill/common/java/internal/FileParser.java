@@ -1,14 +1,17 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.IOException;
+import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 
 import de.ust.skill.common.java.internal.FieldTypes.Annotation;
 import de.ust.skill.common.java.internal.FieldTypes.BoolType;
-import de.ust.skill.common.java.internal.FieldTypes.CompoundType;
 import de.ust.skill.common.java.internal.FieldTypes.ConstantI16;
 import de.ust.skill.common.java.internal.FieldTypes.ConstantI32;
 import de.ust.skill.common.java.internal.FieldTypes.ConstantI64;
@@ -30,11 +33,13 @@ import de.ust.skill.common.java.internal.FieldTypes.V64;
 import de.ust.skill.common.java.internal.FieldTypes.VariableLengthArray;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.internal.parts.BulkChunk;
+import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.internal.parts.SimpleChunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.java.restrictions.NonNull;
 import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
+import de.ust.skill.common.jvm.streams.MappedInStream;
 
 /**
  * The parser implementation is based on the denotational semantics given in
@@ -359,111 +364,111 @@ public abstract class FileParser<State extends SkillState> {
         for (int count = (int) in.v64(); count != 0; count--)
             typeDefinition();
 
-        // update status
-        resizePools();
-        // insert fields
-        for (InsertionEntry e : fieldInsertionQueue)
-            e.owner.addField(e.ID, eliminatePreliminaryTypesIn(e.type), e.name, e.restrictions).addChunk(e.bci);
+        // resize pools
+        {
+            Stack<StoragePool<?, ?>> resizeStack = new Stack<>();
 
-        throw new Error("todo");
-        // processFieldData();
-    }
+            // resize base pools and push entries to stack
+            for (StoragePool<?, ?> p : resizeQueue) {
+                if (p instanceof BasePool<?>) {
+                    final ArrayList<Block> bs = p.blocks;
+                    final Block last = bs.get(bs.size() - 1);
+                    ((BasePool<?>) p).resizeData((int) last.count);
+                }
+                resizeStack.push(p);
+            }
 
-    private final void resizePools() {
-        Stack<StoragePool<?, ?>> resizeStack = new Stack<>();
-
-        // resize base pools and push entries to stack
-        for (StoragePool<?, ?> p : resizeQueue) {
-            if (p instanceof BasePool<?>) {
+            // create instances from stack
+            for (StoragePool<?, ?> p : resizeStack) {
                 final ArrayList<Block> bs = p.blocks;
                 final Block last = bs.get(bs.size() - 1);
-                ((BasePool<?>) p).resizeData((int) last.count);
+                int i = (int) last.bpo;
+                int high = (int) (last.bpo + last.count);
+                while (i < high && p.insertInstance(i + 1))
+                    i += 1;
             }
-            resizeStack.push(p);
+        }
+        // insert fields
+        for (InsertionEntry e : fieldInsertionQueue) {
+            FieldDeclaration<?, ?> f = e.owner.addField(e.ID, e.type, e.name, e.restrictions);
+            f.eliminatePreliminaryTypes(types);
+            f.addChunk(e.bci);
         }
 
-        // create instances from stack
-        for (StoragePool<?, ?> p : resizeStack) {
-            final ArrayList<Block> bs = p.blocks;
-            final Block last = bs.get(bs.size() - 1);
-            int i = (int) last.bpo;
-            int high = (int) (last.bpo + last.count);
-            while (i < high && p.insertInstance(i + 1))
-                i += 1;
-        }
+        processFieldData();
     }
 
-    @SuppressWarnings("unchecked")
-    private final <T> FieldType<T> eliminatePreliminaryTypesIn(FieldType<T> t) {
-        // user types
-        final int typeID = (int) t.typeID;
-        if (typeID >= 32) {
-            if (t instanceof TypeDefinitionIndex<?>)
-                try {
-                    return (FieldType<T>) types.get(typeID - 32);
-                } catch (Exception e) {
-                    throw new ParseException(in, blockCounter, e, "inexistent user type %d (user types: %s)", typeID,
-                            poolByName.keySet().toString());
+    private final void processFieldData() {
+        // we have to add the file offset to all begins and ends we encounter
+        final long fileOffset = in.position();
+        long dataEnd = fileOffset;
+
+        // awaiting async read operations
+        final Semaphore readBarrier = new Semaphore(1 - fieldDataQueue.size());
+        // async reads will post their errors in this queue
+        final ConcurrentLinkedQueue<Throwable> readErrors = new ConcurrentLinkedQueue<Throwable>();
+
+        // process field data declarations in order of appearance and update
+        // offsets to absolute positions
+        for (DataEntry e : fieldDataQueue) {
+            FieldDeclaration<?, ?> f = e.owner.fields.get(e.fieldID);
+            try {
+                f.eliminatePreliminaryTypes(types);
+            } catch (Exception ex) {
+                throw new ParseException(in, blockCounter, ex, "inexistent user type %d (user types: %s)",
+                        f.type.typeID, poolByName.keySet().toString());
+            }
+
+            // make begin/end absolute
+            f.addOffsetToLastChunk(fileOffset);
+            final Chunk last = f.lastChunk();
+
+            final MappedInStream map;
+            try {
+                map = in.map(0L, last.begin, last.end);
+            } catch (IOException e1) {
+                throw new Error(e1);
+            }
+
+            SkillState.pool.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        f.read(map);
+                        // map was not consumed
+                        if (!map.eof() && !(f instanceof LazyField<?, ?> || f instanceof IgnoredField))
+                            readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
+                    } catch (BufferUnderflowException e) {
+                        readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
+                    } catch (Throwable t) {
+                        readErrors.add(t);
+                    } finally {
+                        readBarrier.release();
+                    }
                 }
-            return t;
+            });
+            dataEnd = Math.max(dataEnd, last.end);
         }
+        in.jump(dataEnd);
 
-        // builtins
-        if (t instanceof CompoundType<?>)
-            return ((CompoundType<T>) t).eliminatePreliminaryBaseType(types);
-        return t;
+        // await async reads
+        try {
+            readBarrier.acquire();
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
+        for (Throwable e : readErrors) {
+            e.printStackTrace();
+        }
+        if (!readErrors.isEmpty())
+            throw new ParseException(in, blockCounter, readErrors.peek(),
+                    "unexpected exception(s) while reading field data (see above)");
     }
-    // @inline def processFieldData {
-    // // we have to add the file offset to all begins and ends we encounter
-    // val fileOffset = in.position
-    // var dataEnd = fileOffset
-    //
-    // // awaiting async read operations
-    // val asyncReads = ArrayBuffer[Future[Try[Unit]]]();
-    //
-    // //process field data declarations in order of appearance and update
-    // offsets to absolute positions
-    // @inline def processField[T](p : StoragePool[_ <: SkillType, _ <:
-    // SkillType], index : Int) {
-    // val f = p.fields(index).asInstanceOf[FieldDeclaration[T]]
-    // f.t = eliminatePreliminaryTypesIn[T](f.t.asInstanceOf[FieldType[T]])
-    //
-    // // make begin/end absolute
-    // f.addOffsetToLastChunk(fileOffset)
-    // val last = f.lastChunk
-    //
-    // val map = in.map(0L, last.begin, last.end)
-    // asyncReads.append(Future(Try(try {
-    // f.read(map)
-    // // map was not consumed
-    // if (!map.eof && !(f.isInstanceOf[LazyField[_]] ||
-    // f.isInstanceOf[IgnoredField]))
-    // throw PoolSizeMissmatchError(blockCounter, last.begin, last.end, f)
-    // } catch {
-    // case e : BufferUnderflowException ⇒
-    // throw PoolSizeMissmatchError(blockCounter, last.begin, last.end, f)
-    // }
-    // )))
-    // dataEnd = Math.max(dataEnd, last.end)
-    // }
-    // for ((p, fID) ← fieldDataQueue) {
-    // processField(p, fID)
-    // }
-    // in.jump(dataEnd)
-    //
-    // // await async reads
-    // for (f ← asyncReads) {
-    // Await.result(f, Duration.Inf) match {
-    // case Failure(e) ⇒
-    // e.printStackTrace()
-    // println("throw")
-    // if (e.isInstanceOf[SkillException]) throw e
-    // else throw ParseException(in, blockCounter,
-    // "unexpected exception while reading field data (see below)", e)
-    // case _ ⇒
-    // }
-    // }
-    // }
-    // }
 
+    /**
+     * puts everything together
+     * 
+     * @return a checked and ready-to-use state
+     */
+    public abstract State makeState();
 }

@@ -32,14 +32,21 @@ final public class FileParser extends de.ust.skill.common.java.internal.FilePars
      */
     public static SkillState read(FileInputStream in, Mode writeMode) throws ParseException {
         de.ust.skill.common.java.internal.FileParser<SkillState> p = new FileParser(in, writeMode);
+        return p.makeState();
         // TODO make
-        throw new Error("TODO");
     }
 
     @Override
     protected <T extends B, B extends SkillObject> StoragePool<T, B> newPool(String name,
             StoragePool<? super T, B> superPool, HashSet<TypeRestriction> restrictions) {
         // TODO Auto-generated method stub
+        throw new Error("TODO");
+    }
+
+    @Override
+    public SkillState makeState() {
+        // TODO Auto-generated method stub
+
         throw new Error("TODO");
     }
 }
