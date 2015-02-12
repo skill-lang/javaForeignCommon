@@ -7,7 +7,10 @@ import java.util.HashSet;
 import age.Age;
 import de.ust.skill.common.java.internal.BasePool;
 import de.ust.skill.common.java.internal.FieldDeclaration;
+import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.StoragePool;
+import de.ust.skill.common.java.internal.TypeMissmatchError;
+import de.ust.skill.common.java.restrictions.FieldRestriction;
 
 public class AgeAccess extends BasePool<Age> {
 
@@ -73,6 +76,31 @@ public class AgeAccess extends BasePool<Age> {
             return this;
         }
 
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R> FieldDeclaration<R, Age> addField(int ID, FieldType<R> type, String name,
+            HashSet<FieldRestriction<?>> restrictions) {
+        final FieldDeclaration<R, Age> f;
+        switch (name) {
+        case "age":
+            f = (FieldDeclaration<R, Age>) new KnownField_Age_age(ID, this);
+            break;
+
+        default:
+            return super.addField(ID, type, name, restrictions);
+        }
+
+        // override preliminary type
+        if (!type.equals(f.type()))
+            throw new TypeMissmatchError(type, f.type().toString(), f.name(), name);
+        // TODO add if we reintroduce named preliminary stypes f.t = t
+
+        for (FieldRestriction<?> r : restrictions)
+            f.addRestriction(r);
+        fields.add(f);
+        return f;
     }
 
     @SuppressWarnings("unchecked")

@@ -27,9 +27,7 @@ public class KnownField_Age_age extends FieldDeclaration<Long, Age> implements K
             is = owner.iterator();
 
         while (is.hasNext()) {
-            long v = in.v64();
-            System.out.println(v);
-            is.next().setAge(v);
+            is.next().setAge(in.v64());
         }
     }
 
