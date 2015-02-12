@@ -18,7 +18,6 @@ public class Main {
             SkillState sf = SkillState.open("test/ageUnrestricted.sf", Mode.Read);
             for (Age a : sf.Ages())
                 System.out.println(a.prettyString());
-            System.out.println("check!");
         }
         System.out.println("done (" + (System.currentTimeMillis() - last) + "ms)");
     }
