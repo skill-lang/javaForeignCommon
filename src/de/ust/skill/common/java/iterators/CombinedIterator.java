@@ -1,6 +1,6 @@
 package de.ust.skill.common.java.iterators;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -12,13 +12,36 @@ import java.util.LinkedList;
  */
 public class CombinedIterator<T> implements Iterator<T> {
     /**
-     * iterator list is linked to allow for gc of unused iterators
+     * iterator list is linked to allow for gc of unused iterators. All
+     * iterators in the list are non-empty
      */
     private LinkedList<Iterator<? extends T>> is;
 
+    /**
+     * Constructs a combined iterator, ignoring all empty iterators in the list
+     * 
+     * @param is
+     *            a list of iterators
+     */
     @SafeVarargs
-    public CombinedIterator(Iterator<? extends T>... is) {
-        this.is = new LinkedList<>(Arrays.asList(is));
+    CombinedIterator(Iterator<? extends T>... is) {
+        this.is = new LinkedList<>();
+        for (Iterator<? extends T> i : is)
+            if (i.hasNext())
+                this.is.addLast(i);
+    }
+
+    /**
+     * Constructs a combined iterator, ignoring all empty iterators in the list
+     * 
+     * @param is
+     *            a list of iterators
+     */
+    CombinedIterator(Collection<Iterator<? extends T>> is) {
+        this.is = new LinkedList<>();
+        for (Iterator<? extends T> i : is)
+            if (i.hasNext())
+                this.is.addLast(i);
     }
 
     @Override
@@ -29,9 +52,7 @@ public class CombinedIterator<T> implements Iterator<T> {
     @Override
     public T next() {
         T next = is.getFirst().next();
-        // we have to pop empty iterators now in order to fulfill hasNext's
-        // contract
-        while (!is.isEmpty() && !is.getFirst().hasNext())
+        if (!is.isEmpty() && !is.getFirst().hasNext())
             is.removeFirst();
 
         return next;
