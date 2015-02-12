@@ -15,8 +15,8 @@ import de.ust.skill.common.java.internal.BasePool;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.StringPool;
-import de.ust.skill.common.java.internal.FieldTypes.Annotation;
-import de.ust.skill.common.java.internal.FieldTypes.StringType;
+import de.ust.skill.common.java.internal.fieldTypes.Annotation;
+import de.ust.skill.common.java.internal.fieldTypes.StringType;
 import de.ust.skill.common.jvm.streams.FileInputStream;
 
 /**
