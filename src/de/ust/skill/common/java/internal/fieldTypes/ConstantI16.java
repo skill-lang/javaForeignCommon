@@ -1,4 +1,4 @@
-package de.ust.skill.common.java.internal.FieldTypes;
+package de.ust.skill.common.java.internal.fieldTypes;
 
 public final class ConstantI16 extends ConstantIntegerType<Short> {
     public final short value;

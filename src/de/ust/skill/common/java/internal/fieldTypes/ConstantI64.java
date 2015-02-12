@@ -1,4 +1,4 @@
-package de.ust.skill.common.java.internal.FieldTypes;
+package de.ust.skill.common.java.internal.fieldTypes;
 
 public final class ConstantI64 extends ConstantIntegerType<Long> {
     public final long value;

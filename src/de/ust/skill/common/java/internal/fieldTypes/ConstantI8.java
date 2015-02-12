@@ -1,4 +1,4 @@
-package de.ust.skill.common.java.internal.FieldTypes;
+package de.ust.skill.common.java.internal.fieldTypes;
 
 public final class ConstantI8 extends ConstantIntegerType<Byte> {
     public final byte value;

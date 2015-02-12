@@ -1,4 +1,4 @@
-package de.ust.skill.common.java.internal.FieldTypes;
+package de.ust.skill.common.java.internal.fieldTypes;
 
 import java.util.LinkedList;
 
