@@ -1,8 +1,10 @@
 package age.internal;
 
+import java.util.Collections;
 import java.util.HashSet;
 
 import de.ust.skill.common.java.api.SkillFile.Mode;
+import de.ust.skill.common.java.internal.BasePool;
 import de.ust.skill.common.java.internal.ParseException;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
@@ -36,15 +38,44 @@ final public class FileParser extends de.ust.skill.common.java.internal.FilePars
         // TODO make
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected <T extends B, B extends SkillObject> StoragePool<T, B> newPool(String name,
             StoragePool<? super T, B> superPool, HashSet<TypeRestriction> restrictions) {
-        // TODO Auto-generated method stub
-        throw new Error("TODO");
+        final StoragePool<T, B> p;
+        // allocate correct pool type
+        switch (name) {
+        case "age":
+            p = (StoragePool<T, B>) new AgeAccess(types.size());
+            break;
+
+        default:
+            if (null == superPool)
+                p = (StoragePool<T, B>) new BasePool<T>(types.size(), name, Collections.EMPTY_SET);
+            else
+                p = superPool.makeSubPool(types.size(), name);
+            break;
+        }
+
+        // check super type expectations
+        if (p.superPool() != superPool)
+            throw new ParseException(
+                    in,
+                    blockCounter,
+                    null,
+                    "The super type of %s stored in the file does not match the specification!\nexpected %s, but was %s",
+                    name, null == p.superPool() ? "<none>" : p.superPool().name(), null == superPool ? "<none>"
+                            : superPool.name());
+
+        types.add(p);
+        poolByName.put(name, p);
+
+        return p;
     }
 
     @Override
     public SkillState makeState() {
+        // TODO create second constructor passing poolByName
         // TODO Auto-generated method stub
 
         throw new Error("TODO");
