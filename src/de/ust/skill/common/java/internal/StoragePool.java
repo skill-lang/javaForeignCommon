@@ -2,15 +2,17 @@ package de.ust.skill.common.java.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillFile;
 import de.ust.skill.common.java.internal.FieldTypes.ReferenceType;
 import de.ust.skill.common.java.internal.parts.Block;
-import de.ust.skill.common.java.iterators.CombinedIterator;
+import de.ust.skill.common.java.iterators.Iterators;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.InStream;
 
@@ -55,7 +57,16 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     final String name;
     final StoragePool<? super T, B> superPool;
     final BasePool<B> basePool;
+    final ArrayList<SubPool<? extends T, B>> subPools = new ArrayList<>();
     public final Set<String> knownFields;
+
+    /**
+     * used by generated file parsers
+     */
+    public StoragePool<? super T, B> superPool() {
+        return superPool;
+    }
+
     /**
      * @note the fieldIndex is either identical to the position in fields or it
      *       is an auto field
@@ -74,8 +85,17 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     final ArrayList<T> newObjects = new ArrayList<>();
 
-    // TODO protected def newDynamicInstances : Iterator[T] =
-    // subPools.foldLeft(newObjects.iterator)(_ ++ _.newDynamicInstances)
+    protected final Iterator<T> newDynamicInstances() {
+        LinkedList<Iterator<? extends T>> is = new LinkedList<>();
+        if(!newObjects.isEmpty())
+            is.add(newObjects.iterator());
+        for (SubPool<? extends T, B> sub : subPools) {
+            Iterator<? extends T> subIter = sub.newDynamicInstances();
+            if (!subIter.hasNext())
+                is.add(subIter);
+        }
+        return Iterators.<T> concatenate(is);
+    }
 
     /**
      * the number of instances of exactly this type, excluding sub-types
@@ -87,7 +107,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     final Iterator<T> staticInstances() {
-        return new CombinedIterator<T>(staticData.iterator(), newObjects.iterator());
+        return Iterators.<T> concatenate(staticData.iterator(), newObjects.iterator());
     }
 
     /**
@@ -148,37 +168,27 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     @Override
     public boolean contains(Object o) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public Iterator<T> iterator() {
         throw new Error("TODO");
     }
 
     @Override
     public Object[] toArray() {
-        // TODO Auto-generated method stub
-        return null;
+        throw new Error("TODO");
     }
 
     @Override
     public <U> U[] toArray(U[] a) {
-        // TODO Auto-generated method stub
-        return null;
+        throw new Error("TODO");
     }
 
     @Override
     public boolean add(T e) {
-        // TODO Auto-generated method stub
-        return false;
+        throw new Error("TODO");
     }
 
     @Override
     public boolean remove(Object o) {
-        // TODO Auto-generated method stub
-        return false;
+        throw new Error("TODO");
     }
 
     @Override
@@ -256,5 +266,12 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     public void addKnownField(String name) {
         // Arbitrary storage pools know no fields!
+    }
+
+    /**
+     * used internally for type forest construction
+     */
+    public <S extends T> StoragePool<S, B> makeSubPool(int index, String name) {
+        return new SubPool<S, B>(index, name, this, Collections.emptySet());
     }
 }

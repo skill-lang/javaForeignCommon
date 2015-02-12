@@ -9,11 +9,11 @@ import de.ust.skill.common.jvm.streams.InStream;
  * @author Timm Felden
  */
 public final class ParseException extends SkillException {
-    ParseException(InStream in, int block, Throwable cause, String msg) {
+    public ParseException(InStream in, int block, Throwable cause, String msg) {
         super(String.format("In block %d @0x%x: %s", block + 1, in.position(), msg), cause);
     }
 
-    ParseException(InStream in, int block, Throwable cause, String msgFormat, Object... msgArgs) {
+    public ParseException(InStream in, int block, Throwable cause, String msgFormat, Object... msgArgs) {
         super(String.format("In block %d @0x%x: %s", block + 1, in.position(), String.format(msgFormat, msgArgs)),
                 cause);
     }

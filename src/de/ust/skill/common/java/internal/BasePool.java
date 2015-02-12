@@ -1,9 +1,11 @@
 package de.ust.skill.common.java.internal;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Set;
 
 import de.ust.skill.common.java.api.SkillFile;
+import de.ust.skill.common.java.iterators.Iterators;
 
 /**
  * The base of a type hierarchy. Contains optimized representations of data
@@ -73,4 +75,12 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
         staticData.add(r);
         return true;
     }
+    
+
+    @Override
+    public Iterator<T> iterator() {
+        return Iterators.<T> concatenate(Iterators.<T> array(basePool.data), newDynamicInstances());
+
+    }
+    
 }

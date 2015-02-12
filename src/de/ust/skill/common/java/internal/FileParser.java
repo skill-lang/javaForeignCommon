@@ -48,7 +48,7 @@ import de.ust.skill.common.jvm.streams.MappedInStream;
  * @author Timm Felden
  */
 public abstract class FileParser<State extends SkillState> {
-    private FileInputStream in;
+    protected FileInputStream in;
 
     // ERROR REPORTING
     protected int blockCounter = 0;
@@ -58,8 +58,8 @@ public abstract class FileParser<State extends SkillState> {
     final StringPool Strings;
 
     // types
-    final ArrayList<StoragePool<?, ?>> types = new ArrayList<>();
-    final HashMap<String, StoragePool<?, ?>> poolByName = new HashMap<>();
+    protected final ArrayList<StoragePool<?, ?>> types = new ArrayList<>();
+    protected final HashMap<String, StoragePool<?, ?>> poolByName = new HashMap<>();
     final Annotation Annotation = new Annotation(types);
     final StringType StringType;
 
