@@ -16,10 +16,13 @@ import de.ust.skill.common.java.iterators.Iterators;
  */
 public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
 
+    private static final SkillObject[] emptyData = new SkillObject[0];
+
     /**
      * instances read from disk
      */
-    T[] data;
+    @SuppressWarnings("unchecked")
+    T[] data = (T[]) emptyData;
 
     /**
      * the owner is set once by the SkillState.finish method!
@@ -28,6 +31,7 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
 
     public BasePool(long poolIndex, String name, Set<String> knownFields) {
         super(poolIndex, name, null, knownFields);
+        fields.add(new KnownField_SkillID<T>(this));
     }
 
     @Override
@@ -75,12 +79,11 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
         staticData.add(r);
         return true;
     }
-    
 
     @Override
     public Iterator<T> iterator() {
         return Iterators.<T> concatenate(Iterators.<T> array(basePool.data), newDynamicInstances());
 
     }
-    
+
 }

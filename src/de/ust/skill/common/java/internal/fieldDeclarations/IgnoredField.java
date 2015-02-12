@@ -1,4 +1,4 @@
-package de.ust.skill.common.java.internal;
+package de.ust.skill.common.java.internal.fieldDeclarations;
 
 import de.ust.skill.common.jvm.streams.MappedInStream;
 

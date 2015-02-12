@@ -10,7 +10,7 @@ import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillFile;
-import de.ust.skill.common.java.internal.FieldTypes.ReferenceType;
+import de.ust.skill.common.java.internal.fieldTypes.ReferenceType;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.iterators.Iterators;
 import de.ust.skill.common.java.restrictions.FieldRestriction;

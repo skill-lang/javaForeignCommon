@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 import de.ust.skill.common.java.api.Access;
-import de.ust.skill.common.java.internal.FieldTypes.CompoundType;
+import de.ust.skill.common.java.internal.fieldTypes.CompoundType;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.MappedInStream;

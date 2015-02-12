@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.internal;
 
+
 /**
  * The root of the hierarchy of instances of skill user types. Annotations can
  * store arbitrary objects, thus this type has to exist explicitly.

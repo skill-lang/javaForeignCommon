@@ -10,27 +10,28 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
-import de.ust.skill.common.java.internal.FieldTypes.Annotation;
-import de.ust.skill.common.java.internal.FieldTypes.BoolType;
-import de.ust.skill.common.java.internal.FieldTypes.ConstantI16;
-import de.ust.skill.common.java.internal.FieldTypes.ConstantI32;
-import de.ust.skill.common.java.internal.FieldTypes.ConstantI64;
-import de.ust.skill.common.java.internal.FieldTypes.ConstantI8;
-import de.ust.skill.common.java.internal.FieldTypes.ConstantLengthArray;
-import de.ust.skill.common.java.internal.FieldTypes.ConstantV64;
-import de.ust.skill.common.java.internal.FieldTypes.F32;
-import de.ust.skill.common.java.internal.FieldTypes.F64;
-import de.ust.skill.common.java.internal.FieldTypes.I16;
-import de.ust.skill.common.java.internal.FieldTypes.I32;
-import de.ust.skill.common.java.internal.FieldTypes.I64;
-import de.ust.skill.common.java.internal.FieldTypes.I8;
-import de.ust.skill.common.java.internal.FieldTypes.ListType;
-import de.ust.skill.common.java.internal.FieldTypes.MapType;
-import de.ust.skill.common.java.internal.FieldTypes.ReferenceType;
-import de.ust.skill.common.java.internal.FieldTypes.SetType;
-import de.ust.skill.common.java.internal.FieldTypes.StringType;
-import de.ust.skill.common.java.internal.FieldTypes.V64;
-import de.ust.skill.common.java.internal.FieldTypes.VariableLengthArray;
+import de.ust.skill.common.java.internal.fieldDeclarations.IgnoredField;
+import de.ust.skill.common.java.internal.fieldTypes.Annotation;
+import de.ust.skill.common.java.internal.fieldTypes.BoolType;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantI16;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantI32;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantI64;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantI8;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantLengthArray;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantV64;
+import de.ust.skill.common.java.internal.fieldTypes.F32;
+import de.ust.skill.common.java.internal.fieldTypes.F64;
+import de.ust.skill.common.java.internal.fieldTypes.I16;
+import de.ust.skill.common.java.internal.fieldTypes.I32;
+import de.ust.skill.common.java.internal.fieldTypes.I64;
+import de.ust.skill.common.java.internal.fieldTypes.I8;
+import de.ust.skill.common.java.internal.fieldTypes.ListType;
+import de.ust.skill.common.java.internal.fieldTypes.MapType;
+import de.ust.skill.common.java.internal.fieldTypes.ReferenceType;
+import de.ust.skill.common.java.internal.fieldTypes.SetType;
+import de.ust.skill.common.java.internal.fieldTypes.StringType;
+import de.ust.skill.common.java.internal.fieldTypes.V64;
+import de.ust.skill.common.java.internal.fieldTypes.VariableLengthArray;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.internal.parts.BulkChunk;
 import de.ust.skill.common.java.internal.parts.Chunk;
@@ -322,7 +323,7 @@ public abstract class FileParser<State extends SkillState> {
             for (int fieldCounter = 0; fieldCounter < localFieldCount; fieldCounter++) {
                 final int ID = (int) in.v64();
                 if (ID > totalFieldCount || ID < 0)
-                    throw new ParseException(in, blockCounter, null, "Found an illegal field ID: %i", ID);
+                    throw new ParseException(in, blockCounter, null, "Found an illegal field ID: %d", ID);
 
                 final long end;
                 if (ID == totalFieldCount) {
