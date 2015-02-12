@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.ust.skill.common.java.api.SkillFile;
 import de.ust.skill.common.java.iterators.Iterators;
 
 /**
@@ -16,18 +15,28 @@ import de.ust.skill.common.java.iterators.Iterators;
  */
 public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
 
-    private static final SkillObject[] emptyData = new SkillObject[0];
+    /**
+     * workaround for fucked-up generic array types
+     * 
+     * @return an empty array that is used as initial value of data
+     * @note has to be overridden by each concrete base pool
+     */
+    @SuppressWarnings({ "static-method", "unchecked" })
+    protected T[] emptyArray() {
+        return (T[]) new SkillObject[0];
+    }
 
     /**
      * instances read from disk
+     * 
+     * @note manual type erasure required for consistency
      */
-    @SuppressWarnings("unchecked")
-    T[] data = (T[]) emptyData;
+    protected T[] data = emptyArray();
 
     /**
      * the owner is set once by the SkillState.finish method!
      */
-    private SkillFile owner = null;
+    protected SkillState owner = null;
 
     public BasePool(long poolIndex, String name, Set<String> knownFields) {
         super(poolIndex, name, null, knownFields);
@@ -35,14 +44,14 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
     }
 
     @Override
-    public SkillFile owner() {
+    public SkillState owner() {
         return owner;
     }
 
     /**
      * can only be invoked once by the skill state constructor!
      */
-    public void setOwner(SkillFile owner) {
+    public void setOwner(SkillState owner) {
         assert null == this.owner : "owner can only be set once";
         assert null != owner : "owner can not be null";
         this.owner = owner;
@@ -68,7 +77,7 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      * Static instances of base pool deal with unknown types only!
      */
     @Override
-    boolean insertInstance(int skillID) {
+    public boolean insertInstance(int skillID) {
         int i = skillID - 1;
         if (null != data[i])
             return false;
@@ -84,6 +93,13 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
     public Iterator<T> iterator() {
         return Iterators.<T> concatenate(Iterators.<T> array(basePool.data), newDynamicInstances());
 
+    }
+
+    /**
+     * Internal use only!
+     */
+    public Iterator<T> dataViewIterator(int begin, int end) {
+        return Iterators.<T> array(data, begin, end);
     }
 
 }

@@ -45,7 +45,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
     /**
      * the enclosing storage pool
      */
-    final StoragePool<Obj, ? super Obj> owner;
+    protected final StoragePool<Obj, ? super Obj> owner;
 
     /**
      * Restriction handling.
