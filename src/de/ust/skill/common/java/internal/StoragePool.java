@@ -68,10 +68,17 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     /**
+     * used by generated file parsers / known fields
+     */
+    public BasePool<B> basePool() {
+        return basePool;
+    }
+
+    /**
      * @note the fieldIndex is either identical to the position in fields or it
      *       is an auto field
      */
-    final ArrayList<FieldDeclaration<?, T>> fields;
+    protected final ArrayList<FieldDeclaration<?, T>> fields;
 
     /**
      * The block layout of instances of this pool.
@@ -264,8 +271,9 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     /**
      * used internally for state allocation
      */
+    @SuppressWarnings("static-method")
     public void addKnownField(String name) {
-        // Arbitrary storage pools know no fields!
+        throw new Error("Arbitrary storage pools know no fields!");
     }
 
     /**
