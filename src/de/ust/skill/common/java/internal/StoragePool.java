@@ -258,7 +258,10 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     abstract boolean insertInstance(int skillID);
 
-    <R> FieldDeclaration<R, T> addField(int ID, FieldType<R> type, String name,
+    /**
+     * internal use only!
+     */
+    public <R> FieldDeclaration<R, T> addField(int ID, FieldType<R> type, String name,
             HashSet<FieldRestriction<?>> restrictions) {
         FieldDeclaration<R, T> f = new LazyField<R, T>(type, name, ID, this);
         for (FieldRestriction<?> r : restrictions)

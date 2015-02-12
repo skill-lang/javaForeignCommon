@@ -412,7 +412,7 @@ public abstract class FileParser<State extends SkillState> {
         // process field data declarations in order of appearance and update
         // offsets to absolute positions
         for (DataEntry e : fieldDataQueue) {
-            FieldDeclaration<?, ?> f = e.owner.fields.get(e.fieldID);
+            final FieldDeclaration<?, ?> f = e.owner.fields.get(e.fieldID);
             try {
                 f.eliminatePreliminaryTypes(types);
             } catch (Exception ex) {
@@ -455,8 +455,8 @@ public abstract class FileParser<State extends SkillState> {
         // await async reads
         try {
             readBarrier.acquire();
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         for (Throwable e : readErrors) {
             e.printStackTrace();

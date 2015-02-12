@@ -23,7 +23,11 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      *       but it makes file parser implementation a lot easier, because there
      *       is no need for two mostly similar type hierarchy implementations
      */
-    FieldType<T> type;
+    protected FieldType<T> type;
+
+    public final FieldType<T> type() {
+        return type;
+    }
 
     /**
      * skill name of this
