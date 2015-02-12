@@ -3,6 +3,7 @@ package age.internal;
 import java.util.Collections;
 import java.util.HashSet;
 
+import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.api.SkillFile.Mode;
 import de.ust.skill.common.java.internal.BasePool;
 import de.ust.skill.common.java.internal.ParseException;
@@ -13,6 +14,8 @@ import de.ust.skill.common.jvm.streams.FileInputStream;
 
 final public class FileParser extends de.ust.skill.common.java.internal.FileParser<SkillState> {
 
+    public final SkillState state;
+
     /**
      * Constructs a parser that parses the file from in and constructs the
      * state. State is valid immediately after construction.
@@ -20,10 +23,13 @@ final public class FileParser extends de.ust.skill.common.java.internal.FilePars
     private FileParser(FileInputStream in, Mode writeMode) throws ParseException {
         super(in);
 
+        // parse blocks
         while (!in.eof()) {
             stringBlock();
             typeBlock();
         }
+
+        this.state = makeState(writeMode);
     }
 
     /**
@@ -33,9 +39,8 @@ final public class FileParser extends de.ust.skill.common.java.internal.FilePars
      *       allocation depend on the specification
      */
     public static SkillState read(FileInputStream in, Mode writeMode) throws ParseException {
-        de.ust.skill.common.java.internal.FileParser<SkillState> p = new FileParser(in, writeMode);
-        return p.makeState();
-        // TODO make
+        FileParser p = new FileParser(in, writeMode);
+        return p.state;
     }
 
     @SuppressWarnings("unchecked")
@@ -73,11 +78,13 @@ final public class FileParser extends de.ust.skill.common.java.internal.FilePars
         return p;
     }
 
-    @Override
-    public SkillState makeState() {
-        // TODO create second constructor passing poolByName
-        // TODO Auto-generated method stub
-
-        throw new Error("TODO");
+    private SkillState makeState(Mode mode) {
+        SkillState r = new SkillState(poolByName, Strings, types, in.path(), mode);
+        try {
+            r.check();
+        } catch (SkillException e) {
+            throw new ParseException(in, blockCounter, e, "Post serialization check failed!");
+        }
+        return r;
     }
 }

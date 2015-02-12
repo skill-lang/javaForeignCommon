@@ -56,7 +56,7 @@ public abstract class FileParser<State extends SkillState> {
     protected HashSet<String> seenTypes = new HashSet<>();
 
     // strings
-    final StringPool Strings;
+    protected final StringPool Strings;
 
     // types
     protected final ArrayList<StoragePool<?, ?>> types = new ArrayList<>();
@@ -465,11 +465,4 @@ public abstract class FileParser<State extends SkillState> {
             throw new ParseException(in, blockCounter, readErrors.peek(),
                     "unexpected exception(s) while reading field data (see above)");
     }
-
-    /**
-     * puts everything together
-     * 
-     * @return a checked and ready-to-use state
-     */
-    public abstract State makeState();
 }

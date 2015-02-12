@@ -123,6 +123,33 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
         }
     }
 
+    public SkillState(HashMap<String, StoragePool<?, ?>> poolByName, StringPool strings,
+            ArrayList<StoragePool<?, ?>> types, Path path, Mode mode) {
+        super(path, mode);
+        this.types = types;
+        this.poolByName = poolByName;
+        Ages = (AgeAccess) poolByName.get("age");
+
+        // finalize pools
+        for (StoragePool<?, ?> p : types) {
+            // @note this loop must happen in type order!
+
+            // set owners
+            if (p instanceof BasePool<?>)
+                ((BasePool<?>) p).setOwner(this);
+
+            // add missing field declarations
+            HashSet<String> fieldNames = new HashSet<>();
+            for (FieldDeclaration<?, ?> f : p.fields())
+                fieldNames.add(f.name());
+
+            for (String n : p.knownFields) {
+                if (!fieldNames.contains(n))
+                    p.addKnownField(n);
+            }
+        }
+    }
+
     private final AgeAccess Ages;
 
     @Override
