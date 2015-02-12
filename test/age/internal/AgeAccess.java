@@ -1,19 +1,38 @@
 package age.internal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
 import age.Age;
 import de.ust.skill.common.java.internal.BasePool;
+import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.StoragePool;
 
 public class AgeAccess extends BasePool<Age> {
+
+    @Override
+    protected Age[] emptyArray() {
+        return new Age[0];
+    }
 
     /**
      * Can only be constructed by the SkillFile in this package.
      */
     AgeAccess(long poolIndex) {
         super(poolIndex, "age", new HashSet<String>(Arrays.asList(new String[] { "age" })));
+    }
+
+    @Override
+    public boolean insertInstance(int skillID) {
+        int i = skillID - 1;
+        if (null != data[i])
+            return false;
+
+        Age r = new age.Age(skillID);
+        data[i] = r;
+        staticData.add(r);
+        return true;
     }
 
     /**
@@ -54,5 +73,22 @@ public class AgeAccess extends BasePool<Age> {
             return this;
         }
 
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void addKnownField(String name) {
+        final FieldDeclaration<?, Age> f;
+        switch (name) {
+        case "age":
+            f = new KnownField_Age_age(fields.size(), this);
+            break;
+
+        default:
+            super.addKnownField(name);
+            return;
+        }
+        f.eliminatePreliminaryTypes((ArrayList<StoragePool<?, ?>>) owner.allTypes());
+        fields.add(f);
     }
 }

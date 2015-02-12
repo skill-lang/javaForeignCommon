@@ -33,6 +33,11 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
     // types by skill name
     private final HashMap<String, StoragePool<?, ?>> poolByName;
 
+    @Override
+    public HashMap<String, StoragePool<?, ?>> poolByName() {
+        return poolByName;
+    }
+
     /**
      * Create a new skill file based on argument path and mode.
      * 
