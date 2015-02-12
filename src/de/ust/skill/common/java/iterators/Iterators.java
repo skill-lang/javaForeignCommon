@@ -19,6 +19,23 @@ public class Iterators {
         return new ArrayIterator<T>(target);
     }
 
+    /**
+     * iterates over a view of an array
+     * 
+     * @param target
+     *            viewed array
+     * @param begin
+     *            first index to be used
+     * @param end
+     *            first index _not_ to be used
+     * @return iterator over the supplied range
+     */
+    public static <T> Iterator<T> array(T[] target, int begin, int end) {
+        if (null == target || 0 == target.length || end <= begin)
+            return EmptyIterator.<T> get();
+        return new ArrayIterator<T>(target);
+    }
+
     public static <T> Iterator<T> empyt() {
         return EmptyIterator.<T> get();
     }
