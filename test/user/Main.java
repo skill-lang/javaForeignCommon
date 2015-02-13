@@ -20,7 +20,14 @@ public class Main {
                 System.out.println(a.prettyString());
         }
         System.out.println("done (" + (System.currentTimeMillis() - last) + "ms)");
-        for (int i = 0; i < 100; i++) {
+        last = System.currentTimeMillis();
+        {
+            SkillState sf = SkillState.open("test/age.sf", Mode.Read);
+            for (Age a : sf.Ages())
+                System.out.println(a.prettyString());
+        }
+        System.out.println("done (" + (System.currentTimeMillis() - last) + "ms)");
+        for (int i = 0; i < 10; i++) {
             System.gc();
             last = System.currentTimeMillis();
             {
