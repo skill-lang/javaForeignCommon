@@ -38,6 +38,7 @@ import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.internal.parts.SimpleChunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.java.restrictions.NonNull;
+import de.ust.skill.common.java.restrictions.Range;
 import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
 import de.ust.skill.common.jvm.streams.MappedInStream;
@@ -238,18 +239,13 @@ public abstract class FileParser<State extends SkillState> {
                 break;
 
             case 3:
-                // TODO provide translation
-                // t match {
-                // case I8 ⇒ Range.make(in.i8, in.i8)
-                // case I16 ⇒ Range.make(in.i16, in.i16)
-                // case I32 ⇒ Range.make(in.i32, in.i32)
-                // case I64 ⇒ Range.make(in.i64, in.i64)
-                // case V64 ⇒ Range.make(in.v64, in.v64)
-                // case F32 ⇒ Range.make(in.f32, in.f32)
-                // case F64 ⇒ Range.make(in.f64, in.f64)
-                // case t ⇒ throw new ParseException(in, blockCounter,
-                // s"Type $t can not be range restricted!", null)
-                // }
+                final FieldRestriction<?> r = Range.make((int) t.typeID, in);
+                if (null == r)
+                    throw new ParseException(in, blockCounter, null, "Type %s can not be range restricted!",
+                            t.toString());
+                rval.add(r);
+                break;
+
             case 5:
                 // case 5 ⇒ Coding(String.get(in.v64))
             case 7:
