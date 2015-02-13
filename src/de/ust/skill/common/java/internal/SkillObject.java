@@ -47,11 +47,11 @@ public class SkillObject {
     /**
      * Do not rely on skill ID if you do not know exactly what you are doing.
      */
-    public long getSkillID() {
+    public final long getSkillID() {
         return skillID;
     }
 
-    void setSkillID(long skillID) {
+    final void setSkillID(long skillID) {
         this.skillID = skillID;
     }
 

@@ -8,7 +8,7 @@ import java.util.Iterator;
  * 
  * @author Timm Felden
  */
-public class Iterators {
+public final class Iterators {
     private Iterators() {
         // there is no instance
     }

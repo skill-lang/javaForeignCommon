@@ -10,7 +10,7 @@ import java.util.LinkedList;
  * 
  * @author Timm Felden
  */
-public class CombinedIterator<T> implements Iterator<T> {
+public final class CombinedIterator<T> implements Iterator<T> {
     /**
      * iterator list is linked to allow for gc of unused iterators. All
      * iterators in the list are non-empty

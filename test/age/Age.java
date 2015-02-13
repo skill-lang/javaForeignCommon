@@ -47,7 +47,7 @@ public class Age extends SkillObject {
      * 
      * @note type := min(0) v64
      */
-    public long getAge() {
+    final public long getAge() {
         return age;
     }
 
@@ -57,7 +57,7 @@ public class Age extends SkillObject {
      * 
      * @note type := min(0) v64
      */
-    public void setAge(long age) {
+    final public void setAge(long age) {
         this.age = age;
     }
 

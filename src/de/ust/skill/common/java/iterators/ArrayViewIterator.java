@@ -7,7 +7,7 @@ import java.util.Iterator;
  * 
  * @author Timm Felden
  */
-public class ArrayViewIterator<T> implements Iterator<T> {
+public final class ArrayViewIterator<T> implements Iterator<T> {
     private final T[] target;
     private int index;
     private final int end;
