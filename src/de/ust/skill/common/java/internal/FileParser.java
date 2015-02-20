@@ -352,6 +352,7 @@ public abstract class FileParser<State extends SkillState> {
 
     protected void typeBlock() {
         // reset fields
+        seenTypes.clear();
         resizeQueue.clear();
         fieldInsertionQueue.clear();
         fieldDataQueue.clear();
