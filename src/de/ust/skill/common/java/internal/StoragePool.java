@@ -9,7 +9,6 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
-import de.ust.skill.common.java.api.SkillFile;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.ReferenceType;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
@@ -57,7 +56,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     final String name;
     final StoragePool<? super T, B> superPool;
-    final BasePool<B> basePool;
+    protected final BasePool<B> basePool;
     final ArrayList<SubPool<? extends T, B>> subPools = new ArrayList<>();
     public final Set<String> knownFields;
 
@@ -234,7 +233,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public SkillFile owner() {
+    public SkillState owner() {
         return basePool.owner();
     }
 
