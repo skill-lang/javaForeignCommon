@@ -5,7 +5,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 import de.ust.skill.common.java.api.Access;
+import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.CompoundType;
+import de.ust.skill.common.java.internal.fieldTypes.StringType;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.MappedInStream;
@@ -146,7 +148,8 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      *       the right type
      */
     @SuppressWarnings("unchecked")
-    public final void eliminatePreliminaryTypes(ArrayList<StoragePool<?, ?>> types) {
+    public final void eliminatePreliminaryTypes(ArrayList<StoragePool<?, ?>> types, StringType string,
+            Annotation annotation) {
         // user types
         final int typeID = (int) type.typeID;
         if (typeID >= 32 && type instanceof TypeDefinitionIndex<?>)
@@ -154,5 +157,9 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
         // builtins
         else if (type instanceof CompoundType<?>)
             type = ((CompoundType<T>) type).eliminatePreliminaryTypes(types);
+        else if (type instanceof StringType)
+            type = (FieldType<T>) string;
+        else if (type instanceof Annotation)
+            type = (FieldType<T>) annotation;
     }
 }

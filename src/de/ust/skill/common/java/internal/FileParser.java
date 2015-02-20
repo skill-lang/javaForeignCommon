@@ -388,7 +388,7 @@ public abstract class FileParser<State extends SkillState> {
         // insert fields
         for (InsertionEntry e : fieldInsertionQueue) {
             FieldDeclaration<?, ?> f = e.owner.addField(e.ID, e.type, e.name, e.restrictions);
-            f.eliminatePreliminaryTypes(types);
+            f.eliminatePreliminaryTypes(types, StringType, Annotation);
             f.addChunk(e.bci);
         }
 
@@ -410,7 +410,7 @@ public abstract class FileParser<State extends SkillState> {
         for (DataEntry e : fieldDataQueue) {
             final FieldDeclaration<?, ?> f = e.owner.fields.get(e.fieldID);
             try {
-                f.eliminatePreliminaryTypes(types);
+                f.eliminatePreliminaryTypes(types, StringType, Annotation);
             } catch (Exception ex) {
                 throw new ParseException(in, blockCounter, ex, "inexistent user type %d (user types: %s)",
                         f.type.typeID, poolByName.keySet().toString());

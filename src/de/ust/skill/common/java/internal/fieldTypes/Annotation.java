@@ -14,14 +14,22 @@ import de.ust.skill.common.jvm.streams.InStream;
  */
 public final class Annotation extends FieldType<SkillObject> implements ReferenceType {
 
+    private static final Annotation temporaryInstance = new Annotation(null);
+
+    /**
+     * @return temporary type required for state construction intermediate state
+     */
+    public static Annotation tmp() {
+        return temporaryInstance;
+    }
+
     private final ArrayList<StoragePool<?, ?>> types;
 
     /**
      * @param types
      *            the array list containing all types valid inside of a state
-     * @note types can grow after passing the pointer to the annotation type.
-     *       This behavior is required in order to implement reflective
-     *       annotation parsing correctly.
+     * @note types can grow after passing the pointer to the annotation type. This behavior is required in order to
+     *       implement reflective annotation parsing correctly.
      */
     public Annotation(ArrayList<StoragePool<?, ?>> types) {
         super(5);

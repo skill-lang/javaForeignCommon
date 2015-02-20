@@ -10,7 +10,9 @@ import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillFile;
+import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.ReferenceType;
+import de.ust.skill.common.java.internal.fieldTypes.StringType;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.iterators.Iterators;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
@@ -25,9 +27,8 @@ import de.ust.skill.common.jvm.streams.InStream;
  * @param <B>
  *            base type of this hierarchy
  * @note Storage pools must be created in type order!
- * @note We do not guarantee functional correctness if instances from multiple
- *       skill files are mixed. Such usage will likely break at least one of the
- *       files.
+ * @note We do not guarantee functional correctness if instances from multiple skill files are mixed. Such usage will
+ *       likely break at least one of the files.
  */
 abstract public class StoragePool<T extends B, B extends SkillObject> extends FieldType<T> implements Access<T>,
         ReferenceType {
@@ -36,8 +37,8 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      * Builder for new instances of the pool.
      * 
      * @author Timm Felden
-     * @todo revisit implementation after the pool is completely implemented.
-     *       Having an instance as constructor argument is questionable.
+     * @todo revisit implementation after the pool is completely implemented. Having an instance as constructor argument
+     *       is questionable.
      */
     protected static abstract class Builder<T> {
         protected StoragePool<T, ? super T> pool;
@@ -75,8 +76,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     /**
-     * @note the fieldIndex is either identical to the position in fields or it
-     *       is an auto field
+     * @note the fieldIndex is either identical to the position in fields or it is an auto field
      */
     protected final ArrayList<FieldDeclaration<?, T>> fields;
 
@@ -86,15 +86,14 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     ArrayList<Block> blocks = new ArrayList<>();
 
     /**
-     * All stored objects, which have exactly the type T. Objects are stored as
-     * arrays of field entries. The types of the respective fields can be
-     * retrieved using the fieldTypes map.
+     * All stored objects, which have exactly the type T. Objects are stored as arrays of field entries. The types of
+     * the respective fields can be retrieved using the fieldTypes map.
      */
     final ArrayList<T> newObjects = new ArrayList<>();
 
     protected final Iterator<T> newDynamicInstances() {
         LinkedList<Iterator<? extends T>> is = new LinkedList<>();
-        if(!newObjects.isEmpty())
+        if (!newObjects.isEmpty())
             is.add(newObjects.iterator());
         for (SubPool<? extends T, B> sub : subPools) {
             Iterator<? extends T> subIter = sub.newDynamicInstances();
@@ -135,9 +134,8 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     /**
-     * @note the unchecked cast is required, because we can not supply this as
-     *       an argument in a super constructor, thus the base pool can not be
-     *       an argument to the constructor. The cast will never fail anyway.
+     * @note the unchecked cast is required, because we can not supply this as an argument in a super constructor, thus
+     *       the base pool can not be an argument to the constructor. The cast will never fail anyway.
      */
     @SuppressWarnings("unchecked")
     StoragePool(long poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields) {
@@ -275,7 +273,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      * used internally for state allocation
      */
     @SuppressWarnings("static-method")
-    public void addKnownField(String name) {
+    public void addKnownField(String name, StringType string, Annotation annotation) {
         throw new Error("Arbitrary storage pools know no fields!");
     }
 
