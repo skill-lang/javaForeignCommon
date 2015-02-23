@@ -1,11 +1,18 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.IOException;
+import java.nio.BufferUnderflowException;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import de.ust.skill.common.java.api.Access;
+import de.ust.skill.common.java.api.SkillException;
+import de.ust.skill.common.java.internal.SkillState.ReadBarrier;
+import de.ust.skill.common.java.internal.fieldDeclarations.IgnoredField;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
+import de.ust.skill.common.jvm.streams.FileInputStream;
 import de.ust.skill.common.jvm.streams.MappedInStream;
 
 /**
@@ -17,9 +24,8 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
         de.ust.skill.common.java.api.FieldDeclaration<T, Obj> {
 
     /**
-     * @note types may change during file parsing. this may seem like a hack,
-     *       but it makes file parser implementation a lot easier, because there
-     *       is no need for two mostly similar type hierarchy implementations
+     * @note types may change during file parsing. this may seem like a hack, but it makes file parser implementation a
+     *       lot easier, because there is no need for two mostly similar type hierarchy implementations
      */
     protected FieldType<T> type;
 
@@ -112,16 +118,34 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
     /**
      * Data chunk information, as it is required for parsing of field data.
      */
-    protected final LinkedList<Chunk> dataChunks = new LinkedList<>();
+    protected static class ChunkEntry {
+        public final Chunk c;
+        public MappedInStream in;
 
-    public final void addChunk(Chunk chunk) {
-        dataChunks.add(chunk);
+        ChunkEntry(Chunk c) {
+            this.c = c;
+        }
     }
 
-    final void addOffsetToLastChunk(long offset) {
-        Chunk c = dataChunks.getLast();
+    protected final LinkedList<ChunkEntry> dataChunks = new LinkedList<>();
+
+    public final void addChunk(Chunk chunk) {
+        dataChunks.add(new ChunkEntry(chunk));
+    }
+
+    /**
+     * Fix offset and create memory map for field data parsing.
+     * 
+     * @return the end of this chunk
+     */
+    final long addOffsetToLastChunk(FileInputStream in, long offset) throws IOException {
+        Chunk c = dataChunks.getLast().c;
         c.begin += offset;
         c.end += offset;
+
+        dataChunks.getLast().in = in.map(0L, c.begin, c.end);
+
+        return c.end;
     }
 
     final boolean noDataChunk() {
@@ -129,11 +153,52 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
     }
 
     final Chunk lastChunk() {
-        return dataChunks.getLast();
+        return dataChunks.getLast().c;
     }
 
     /**
-     * Read data from a mapped input stream and set it accordingly
+     * Read data from a mapped input stream and set it accordingly. This is invoked at the very end of state
+     * construction and done massively in parallel.
      */
-    public abstract void read(MappedInStream in);
+    protected abstract void read(MappedInStream in, Chunk last);
+
+    /**
+     * Coordinates reads and prevents from state corruption using the barrier.
+     * 
+     * @param barrier
+     *            takes one permit in the caller thread and returns one in the reader thread (per block)
+     * @param readErrors
+     *            errors will be reported in this queue
+     */
+    final void finish(ReadBarrier barrier, final ConcurrentLinkedQueue<SkillException> readErrors) {
+
+        int block = 0;
+        for (ChunkEntry ce : dataChunks) {
+            barrier.beginRead();
+            final int blockCounter = ++block;
+            final MappedInStream map = ce.in;
+            final Chunk last = ce.c;
+            final FieldDeclaration<T, Obj> f = this;
+
+            SkillState.pool.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        f.read(map, last);
+                        // map was not consumed
+                        if (!map.eof() && !(f instanceof LazyField<?, ?> || f instanceof IgnoredField))
+                            readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
+                    } catch (BufferUnderflowException e) {
+                        readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
+                    } catch (SkillException t) {
+                        readErrors.add(t);
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                    } finally {
+                        barrier.release(1);
+                    }
+                }
+            });
+        }
+    }
 }

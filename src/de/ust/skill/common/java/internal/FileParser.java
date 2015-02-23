@@ -1,16 +1,13 @@
 package de.ust.skill.common.java.internal;
 
 import java.io.IOException;
-import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Stack;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
 
-import de.ust.skill.common.java.internal.fieldDeclarations.IgnoredField;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.BoolType;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantI16;
@@ -34,18 +31,15 @@ import de.ust.skill.common.java.internal.fieldTypes.V64;
 import de.ust.skill.common.java.internal.fieldTypes.VariableLengthArray;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.internal.parts.BulkChunk;
-import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.internal.parts.SimpleChunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.java.restrictions.NonNull;
 import de.ust.skill.common.java.restrictions.Range;
 import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
-import de.ust.skill.common.jvm.streams.MappedInStream;
 
 /**
- * The parser implementation is based on the denotational semantics given in
- * TR14§6.
+ * The parser implementation is based on the denotational semantics given in TR14§6.
  *
  * @author Timm Felden
  */
@@ -106,28 +100,8 @@ public abstract class FileParser<State extends SkillState> {
 
     // deferred pool resize requests
     private final LinkedList<StoragePool<?, ?>> resizeQueue = new LinkedList<>();
-    // deferred field declaration appends: pool, ID, type, name, block
-    private final LinkedList<InsertionEntry> fieldInsertionQueue = new LinkedList<>();
-
-    private final static class InsertionEntry {
-        public InsertionEntry(StoragePool<?, ?> owner, int ID, FieldType<?> t, HashSet<FieldRestriction<?>> rest,
-                String name, BulkChunk bulkChunkInfo) {
-            this.owner = owner;
-            // TODO Auto-generated constructor stub
-            this.ID = ID;
-            type = t;
-            restrictions = rest;
-            this.name = name;
-            bci = bulkChunkInfo;
-        }
-
-        final StoragePool<?, ?> owner;
-        final int ID;
-        final HashSet<FieldRestriction<?>> restrictions;
-        final FieldType<?> type;
-        final String name;
-        final BulkChunk bci;
-    }
+    // pool ⇒ local field count
+    private final Map<StoragePool<?, ?>, Integer> localFields = new HashMap<>();
 
     // field data updates: pool x fieldID
     private final LinkedList<DataEntry> fieldDataQueue = new LinkedList<>();
@@ -145,9 +119,8 @@ public abstract class FileParser<State extends SkillState> {
     private long offset = 0L;
 
     /**
-     * Turns a field type into a preliminary type information. In case of user
-     * types, the declaration of the respective user type may follow after the
-     * field declaration.
+     * Turns a field type into a preliminary type information. In case of user types, the declaration of the respective
+     * user type may follow after the field declaration.
      */
     FieldType<?> fieldType() {
         final int typeID = (int) in.v64();
@@ -311,53 +284,21 @@ public abstract class FileParser<State extends SkillState> {
             definition.blocks.add(new Block(bpo, count));
             resizeQueue.add(definition);
 
-            // read field part
-            final ArrayList<FieldDeclaration<?, T>> fields = definition.fields;
-            int totalFieldCount = fields.size();
-
-            for (int fieldCounter = (int) in.v64(); fieldCounter != 0; fieldCounter--) {
-                final int ID = (int) in.v64();
-                if (ID > totalFieldCount || ID < 0)
-                    throw new ParseException(in, blockCounter, null, "Found an illegal field ID: %d", ID);
-
-                final long end;
-                if (ID == totalFieldCount) {
-                    // new field
-                    final String fieldName = Strings.get(in.v64());
-                    if (null == fieldName)
-                        throw new ParseException(in, blockCounter, null, "corrupted file: nullptr in fieldname");
-
-                    FieldType<?> t = fieldType();
-                    HashSet<FieldRestriction<?>> rest = fieldRestrictions(t);
-                    end = in.v64();
-
-                    fieldInsertionQueue.add(new InsertionEntry(definition, ID, t, rest, name, new BulkChunk(offset,
-                            end, count + definition.size())));
-                    totalFieldCount += 1;
-
-                } else {
-                    // field already seen
-                    end = in.v64();
-                    fields.get(ID).addChunk(new SimpleChunk(offset, end, bpo, count));
-
-                }
-                offset = end;
-                fieldDataQueue.add(new DataEntry(definition, ID));
-            }
+            localFields.put(definition, (int) in.v64());
         } catch (java.nio.BufferUnderflowException e) {
             throw new ParseException(in, blockCounter, e, "unexpected end of file");
         }
     }
 
-    protected void typeBlock() {
-        // reset fields
+    final protected void typeBlock() {
+        // reset counters and queues
         seenTypes.clear();
         resizeQueue.clear();
-        fieldInsertionQueue.clear();
+        localFields.clear();
         fieldDataQueue.clear();
         offset = 0L;
 
-        // parse block
+        // parse type
         for (int count = (int) in.v64(); count != 0; count--)
             typeDefinition();
 
@@ -385,10 +326,43 @@ public abstract class FileParser<State extends SkillState> {
                     i += 1;
             }
         }
-        // insert fields
-        for (InsertionEntry e : fieldInsertionQueue) {
-            FieldDeclaration<?, ?> f = e.owner.addField(e.ID, e.type, e.name, e.restrictions);
-            f.addChunk(e.bci);
+
+        // parse fields
+        for (StoragePool<?, ?> p : localFields.keySet()) {
+
+            // read field part
+            int totalFieldCount = p.fields.size();
+
+            final Block lastBlock = p.blocks.get(p.blocks.size() - 1);
+
+            for (int fieldCounter = localFields.get(p); fieldCounter != 0; fieldCounter--) {
+                final int ID = (int) in.v64();
+                if (ID > totalFieldCount || ID < 0)
+                    throw new ParseException(in, blockCounter, null, "Found an illegal field ID: %d", ID);
+
+                final long end;
+                if (ID == totalFieldCount) {
+                    // new field
+                    final String fieldName = Strings.get(in.v64());
+                    if (null == fieldName)
+                        throw new ParseException(in, blockCounter, null, "corrupted file: nullptr in fieldname");
+
+                    FieldType<?> t = fieldType();
+                    HashSet<FieldRestriction<?>> rest = fieldRestrictions(t);
+                    end = in.v64();
+
+                    p.addField(ID, t, fieldName, rest).addChunk(new BulkChunk(offset, end, lastBlock.count + p.size()));
+                    totalFieldCount += 1;
+
+                } else {
+                    // field already seen
+                    end = in.v64();
+                    p.fields.get(ID).addChunk(new SimpleChunk(offset, end, lastBlock.bpo, lastBlock.count));
+
+                }
+                offset = end;
+                fieldDataQueue.add(new DataEntry(p, ID));
+            }
         }
 
         processFieldData();
@@ -399,60 +373,21 @@ public abstract class FileParser<State extends SkillState> {
         final long fileOffset = in.position();
         long dataEnd = fileOffset;
 
-        // awaiting async read operations
-        final Semaphore readBarrier = new Semaphore(1 - fieldDataQueue.size());
-        // async reads will post their errors in this queue
-        final ConcurrentLinkedQueue<Throwable> readErrors = new ConcurrentLinkedQueue<Throwable>();
-
         // process field data declarations in order of appearance and update
         // offsets to absolute positions
         for (DataEntry e : fieldDataQueue) {
             final FieldDeclaration<?, ?> f = e.owner.fields.get(e.fieldID);
 
             // make begin/end absolute
-            f.addOffsetToLastChunk(fileOffset);
-            final Chunk last = f.lastChunk();
-
-            final MappedInStream map;
+            final long end;
             try {
-                map = in.map(0L, last.begin, last.end);
+                end = f.addOffsetToLastChunk(in, fileOffset);
             } catch (IOException e1) {
                 throw new Error(e1);
             }
-
-            SkillState.pool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        f.read(map);
-                        // map was not consumed
-                        if (!map.eof() && !(f instanceof LazyField<?, ?> || f instanceof IgnoredField))
-                            readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
-                    } catch (BufferUnderflowException e) {
-                        readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
-                    } catch (Throwable t) {
-                        readErrors.add(t);
-                    } finally {
-                        readBarrier.release();
-                    }
-                }
-            });
-            dataEnd = Math.max(dataEnd, last.end);
+            dataEnd = Math.max(dataEnd, end);
         }
         in.jump(dataEnd);
-
-        // await async reads
-        try {
-            readBarrier.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        for (Throwable e : readErrors) {
-            e.printStackTrace();
-        }
-        if (!readErrors.isEmpty())
-            throw new ParseException(in, blockCounter, readErrors.peek(),
-                    "unexpected exception(s) while reading field data (see above)");
     }
 
     /**

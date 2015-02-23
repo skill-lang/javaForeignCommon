@@ -1,14 +1,20 @@
 package de.ust.skill.common.java.internal;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 
 import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.api.SkillFile;
 import de.ust.skill.common.java.api.StringAccess;
+import de.ust.skill.common.java.internal.fieldTypes.Annotation;
+import de.ust.skill.common.java.internal.fieldTypes.StringType;
 
 /**
  * Implementation common to all skill states independent of type declarations.
@@ -20,22 +26,86 @@ public abstract class SkillState implements SkillFile {
     /**
      * This pool is used for all asynchronous (de)serialization operations.
      */
-    public static ExecutorService pool = Executors.newCachedThreadPool(new ThreadFactory() {
+    static ExecutorService pool = Executors.newCachedThreadPool(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
             final Thread t = new Thread(r);
             t.setDaemon(true);
+            t.setName("SkillStatePoolThread");
             return t;
         }
     });
 
-    private StringAccess strings;
+    /**
+     * Barrier used to synchronize concurrent read operations.
+     * 
+     * @author Timm Felden
+     */
+    public static class ReadBarrier extends Semaphore {
+        public ReadBarrier() {
+            super(1);
+        }
+
+        /**
+         * called at the beginning of a read operation to ensure main thread will wait for it
+         */
+        public void beginRead() {
+            reducePermits(1);
+        }
+
+    }
+
+    @SuppressWarnings("unchecked")
+    protected final void finalizePools() {
+        StringType ts = new StringType((StringPool) Strings());
+        Annotation as = new Annotation((ArrayList<StoragePool<?, ?>>) allTypes());
+        ReadBarrier barrier = new ReadBarrier();
+        // async reads will post their errors in this queue
+        final ConcurrentLinkedQueue<SkillException> readErrors = new ConcurrentLinkedQueue<SkillException>();
+
+        for (StoragePool<?, ?> p : (ArrayList<StoragePool<?, ?>>) allTypes()) {
+            // @note this loop must happen in type order!
+
+            // set owners
+            if (p instanceof BasePool<?>)
+                ((BasePool<?>) p).setOwner(this);
+
+            // add missing field declarations
+            HashSet<String> fieldNames = new HashSet<>();
+            for (de.ust.skill.common.java.api.FieldDeclaration<?, ?> f : p.fields())
+                fieldNames.add(f.name());
+
+            // ensure existence of known fields
+            for (String n : p.knownFields) {
+                if (!fieldNames.contains(n))
+                    p.addKnownField(n, ts, as);
+            }
+
+            // read known fields
+            for (FieldDeclaration<?, ?> f : p.fields)
+                f.finish(barrier, readErrors);
+        }
+
+        // await async reads
+        try {
+            barrier.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        for (Throwable e : readErrors) {
+            e.printStackTrace();
+        }
+        if (!readErrors.isEmpty())
+            throw readErrors.peek();
+    }
+
+    private final StringPool strings;
 
     /**
      * Path and mode management can be done for arbitrary states.
      */
-    public SkillState(Path path, Mode mode) {
-        // TODO Auto-generated constructor stub
+    protected SkillState(StringPool strings, Path path, Mode mode) {
+        this.strings = strings;
     }
 
     @Override

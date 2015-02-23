@@ -24,10 +24,9 @@ public class DistributedField<T, Obj extends SkillObject> extends FieldDeclarati
     protected HashMap<SkillObject, T> newData = new HashMap<>();
 
     @Override
-    public void read(MappedInStream in) {
+    public void read(MappedInStream in, Chunk last) {
         SkillObject[] d = owner.basePool.data;
         final long firstPosition = in.position();
-        Chunk last = lastChunk();
         try {
             if (last instanceof SimpleChunk) {
                 SimpleChunk c = (SimpleChunk) last;
