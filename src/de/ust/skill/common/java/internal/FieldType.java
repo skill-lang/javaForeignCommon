@@ -14,9 +14,9 @@ import de.ust.skill.common.jvm.streams.InStream;
  */
 abstract public class FieldType<T> {
 
-    final long typeID;
+    final int typeID;
 
-    protected FieldType(long typeID) {
+    protected FieldType(int typeID) {
         this.typeID = typeID;
     }
 
@@ -29,7 +29,7 @@ abstract public class FieldType<T> {
 
     @Override
     public final int hashCode() {
-        return (int) typeID;
+        return typeID;
     }
 
     /**

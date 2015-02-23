@@ -1,5 +1,7 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +18,7 @@ import de.ust.skill.common.java.api.SkillFile;
 import de.ust.skill.common.java.api.StringAccess;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
+import de.ust.skill.common.jvm.streams.FileOutputStream;
 
 /**
  * Implementation common to all skill states independent of type declarations.
@@ -23,6 +26,15 @@ import de.ust.skill.common.java.internal.fieldTypes.StringType;
  * @author Timm Felden
  */
 public abstract class SkillState implements SkillFile {
+
+    /**
+     * write mode this state is operating on
+     */
+    private Mode writeMode;
+    /**
+     * path that will be targeted as binary file
+     */
+    private Path path;
 
     /**
      * This pool is used for all asynchronous (de)serialization operations.
@@ -42,7 +54,7 @@ public abstract class SkillState implements SkillFile {
      * 
      * @author Timm Felden
      */
-    public static class ReadBarrier extends Semaphore {
+    static class ReadBarrier extends Semaphore {
         public ReadBarrier() {
             super(1);
         }
@@ -54,6 +66,18 @@ public abstract class SkillState implements SkillFile {
             reducePermits(1);
         }
 
+    }
+
+    private final StringPool strings;
+
+    /**
+     * Path and mode management can be done for arbitrary states.
+     */
+    protected SkillState(StringPool strings, Path path, Mode mode, ArrayList<StoragePool<?, ?>> types) {
+        this.strings = strings;
+        this.path = path;
+        this.writeMode = mode;
+        this.types = types;
     }
 
     @SuppressWarnings("unchecked")
@@ -100,24 +124,49 @@ public abstract class SkillState implements SkillFile {
             throw readErrors.peek();
     }
 
-    private final StringPool strings;
-
-    /**
-     * Path and mode management can be done for arbitrary states.
-     */
-    protected SkillState(StringPool strings, Path path, Mode mode) {
-        this.strings = strings;
-    }
-
     @Override
-    public StringAccess Strings() {
+    final public StringAccess Strings() {
         return strings;
     }
 
     @Override
-    public void changePath(Path path) {
-        // TODO Auto-generated method stub
+    final public void changePath(Path path) throws IOException {
+        switch (writeMode) {
+        case Write:
+            break;
+        case Append:
+            // catch erroneous behavior
+            if (this.path.equals(path))
+                return;
+            Files.deleteIfExists(path);
+            Files.copy(this.path, path);
+            break;
+        default:
+            // dead!
+            return;
+        }
+        this.path = path;
 
+    }
+
+    @Override
+    final public void changeMode(Mode writeMode) {
+        // pointless
+        if (this.writeMode == writeMode)
+            return;
+
+        switch (writeMode) {
+        case Write:
+            this.writeMode = writeMode;
+        case Append:
+            // write -> append
+            throw new IllegalArgumentException(
+                    "Cannot change write mode from Write to Append, try to use open(<path>, Create, Append) instead.");
+
+        default:
+            // dead, if not used by DAUs
+            return;
+        }
     }
 
     @Override
@@ -138,13 +187,29 @@ public abstract class SkillState implements SkillFile {
 
     @Override
     public void flush() throws SkillException {
-        // TODO Auto-generated method stub
+        check();
+        try {
+            switch (writeMode) {
+            case Write:
+                new StateWriter(this, FileOutputStream.write(path));
+                return;
 
+            case Append:
+                new StateAppender(this, FileOutputStream.append(path));
+                return;
+            default:
+                // dead
+                break;
+            }
+        } catch (IOException e) {
+            throw new SkillException("failed to create out stream", e);
+        }
     }
 
     @Override
     public void close() throws SkillException {
-        // TODO Auto-generated method stub
+        flush();
+        // TODO invalidate state?
 
     }
 
@@ -154,7 +219,7 @@ public abstract class SkillState implements SkillFile {
     public abstract HashMap<String, StoragePool<?, ?>> poolByName();
 
     // types in type order
-    protected ArrayList<StoragePool<?, ?>> types;
+    final protected ArrayList<StoragePool<?, ?>> types;
 
     @Override
     final public Iterable<? extends Access<? extends SkillObject>> allTypes() {

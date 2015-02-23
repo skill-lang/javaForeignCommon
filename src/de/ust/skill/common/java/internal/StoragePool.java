@@ -93,7 +93,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     /**
      * The block layout of instances of this pool.
      */
-    ArrayList<Block> blocks = new ArrayList<>();
+    LinkedList<Block> blocks = new LinkedList<>();
 
     /**
      * All stored objects, which have exactly the type T. Objects are stored as arrays of field entries. The types of
