@@ -454,4 +454,12 @@ public abstract class FileParser<State extends SkillState> {
             throw new ParseException(in, blockCounter, readErrors.peek(),
                     "unexpected exception(s) while reading field data (see above)");
     }
+
+    /**
+     * helper for pool creation in generated code
+     */
+    @SuppressWarnings("unchecked")
+    protected static <T extends SkillObject> FieldDeclaration<?, T>[] noAutoFields() {
+        return (FieldDeclaration<?, T>[]) StoragePool.noAutoFields;
+    }
 }

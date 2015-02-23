@@ -83,7 +83,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      * all fields that are declared as auto
      */
     protected final FieldDeclaration<?, T>[] autoFields;
-    private static final FieldDeclaration<?, ?>[] noAutoFields = new FieldDeclaration<?, ?>[0];
+    static final FieldDeclaration<?, ?>[] noAutoFields = new FieldDeclaration<?, ?>[0];
 
     @SuppressWarnings("unchecked")
     protected static <T extends SkillObject> FieldDeclaration<?, T>[] noAutoFields() {
