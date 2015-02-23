@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadFactory;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillException;
@@ -27,15 +26,17 @@ public abstract class SkillState implements SkillFile {
     /**
      * This pool is used for all asynchronous (de)serialization operations.
      */
-    static ExecutorService pool = Executors.newCachedThreadPool(new ThreadFactory() {
-        @Override
-        public Thread newThread(Runnable r) {
-            final Thread t = new Thread(r);
-            t.setDaemon(true);
-            t.setName("SkillStatePoolThread");
-            return t;
-        }
-    });
+    static ExecutorService pool = Executors.newSingleThreadExecutor();
+
+//            Executors.newCachedThreadPool(new ThreadFactory() {
+//        @Override
+//        public Thread newThread(Runnable r) {
+//            final Thread t = new Thread(r);
+//            t.setDaemon(true);
+//            t.setName("SkillStatePoolThread");
+//            return t;
+//        }
+//    });
 
     /**
      * Barrier used to synchronize concurrent read operations.
@@ -93,7 +94,7 @@ public abstract class SkillState implements SkillFile {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        for (Throwable e : readErrors) {
+        for (SkillException e : readErrors) {
             e.printStackTrace();
         }
         if (!readErrors.isEmpty())

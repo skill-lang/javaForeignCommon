@@ -317,7 +317,6 @@ public abstract class FileParser<State extends SkillState> {
             // create instances from stack
             while (!resizeStack.isEmpty()) {
                 StoragePool<?, ?> p = resizeStack.pop();
-                System.out.println(p.name);
                 final ArrayList<Block> bs = p.blocks;
                 final Block last = bs.get(bs.size() - 1);
                 int i = (int) last.bpo;
@@ -351,7 +350,7 @@ public abstract class FileParser<State extends SkillState> {
                     HashSet<FieldRestriction<?>> rest = fieldRestrictions(t);
                     end = in.v64();
 
-                    p.addField(ID, t, fieldName, rest).addChunk(new BulkChunk(offset, end, lastBlock.count + p.size()));
+                    p.addField(ID, t, fieldName, rest).addChunk(new BulkChunk(offset, end, p.size()));
                     totalFieldCount += 1;
 
                 } else {

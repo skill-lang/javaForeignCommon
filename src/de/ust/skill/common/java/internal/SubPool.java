@@ -1,8 +1,10 @@
 package de.ust.skill.common.java.internal;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
+import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.iterators.Iterators;
 
 /**
@@ -20,8 +22,13 @@ public class SubPool<T extends B, B extends SkillObject> extends StoragePool<T, 
 
     @Override
     public Iterator<T> iterator() {
-        // TODO Auto-generated method stub
-        throw new Error("TODO");
+        B[] data = basePool.data;
+        ArrayList<Iterator<? extends T>> is = new ArrayList<>(1 + blocks.size());
+        is.add(newDynamicInstances());
+        for (Block b : blocks)
+            is.add(Iterators.fakeArray(data, (int) b.bpo, (int) (b.bpo + b.count)));
+
+        return Iterators.concatenate(is);
     }
 
     @SuppressWarnings("unchecked")

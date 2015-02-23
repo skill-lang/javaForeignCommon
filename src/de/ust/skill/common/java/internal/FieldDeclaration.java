@@ -175,7 +175,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
         int block = 0;
         for (ChunkEntry ce : dataChunks) {
             barrier.beginRead();
-            final int blockCounter = ++block;
+            final int blockCounter = block++;
             final MappedInStream map = ce.in;
             final Chunk last = ce.c;
             final FieldDeclaration<T, Obj> f = this;
@@ -189,7 +189,15 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
                         if (!map.eof() && !(f instanceof LazyField<?, ?> || f instanceof IgnoredField))
                             readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
                     } catch (BufferUnderflowException e) {
-                        readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
+                        readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f, e));
+                        synchronized (this) {
+                            System.out.println(f.name);
+                            System.out.println(last.getClass().getName());
+                            System.out.println(last.begin);
+                            System.out.println(last.end);
+                            System.out.println(last.count);
+                            System.out.println(map.position());
+                        }
                     } catch (SkillException t) {
                         readErrors.add(t);
                     } catch (Throwable t) {
