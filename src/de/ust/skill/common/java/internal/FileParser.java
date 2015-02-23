@@ -315,7 +315,9 @@ public abstract class FileParser<State extends SkillState> {
             }
 
             // create instances from stack
-            for (StoragePool<?, ?> p : resizeStack) {
+            while (!resizeStack.isEmpty()) {
+                StoragePool<?, ?> p = resizeStack.pop();
+                System.out.println(p.name);
                 final ArrayList<Block> bs = p.blocks;
                 final Block last = bs.get(bs.size() - 1);
                 int i = (int) last.bpo;

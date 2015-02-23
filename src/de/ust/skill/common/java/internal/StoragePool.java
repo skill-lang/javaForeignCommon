@@ -118,7 +118,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      * 
      * @return size excluding subtypes
      */
-    final public long staticSize() {
+    final public int staticSize() {
         return staticData.size() + newObjects.size();
     }
 
@@ -174,9 +174,11 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      * @return size including subtypes
      */
     @Override
-    public int size() {
-        // TODO Auto-generated method stub
-        return 0;
+    final public int size() {
+        int size = staticSize();
+        for (SubPool<?, ?> s : subPools)
+            size += s.size();
+        return size;
     }
 
     @Override
