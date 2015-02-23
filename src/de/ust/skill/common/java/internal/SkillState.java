@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 
+import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.api.SkillFile;
 import de.ust.skill.common.java.api.StringAccess;
@@ -121,7 +122,17 @@ public abstract class SkillState implements SkillFile {
 
     @Override
     public void check() throws SkillException {
-        // TODO Auto-generated method stub
+        // TODO type restrictions
+        // TODO make pools check fields, because they can optimize checks per instance and remove redispatching, if no
+        // restrictions apply anyway
+        for (StoragePool<?, ?> p : types)
+            for (FieldDeclaration<?, ?> f : p.fields)
+                try {
+                    f.check();
+                } catch (SkillException e) {
+                    throw new SkillException(String.format("check failed in %s.%s:\n  %s", p.name, f.name,
+                            e.getMessage()), e);
+                }
 
     }
 
@@ -142,4 +153,11 @@ public abstract class SkillState implements SkillFile {
      */
     public abstract HashMap<String, StoragePool<?, ?>> poolByName();
 
+    // types in type order
+    protected ArrayList<StoragePool<?, ?>> types;
+
+    @Override
+    final public Iterable<? extends Access<? extends SkillObject>> allTypes() {
+        return types;
+    }
 }

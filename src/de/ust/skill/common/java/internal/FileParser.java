@@ -263,12 +263,10 @@ public abstract class FileParser<State extends SkillState> {
                     if (0 == superID)
                         superDef = null;
                     else if (superID > types.size())
-                        throw new ParseException(
-                                in,
-                                blockCounter,
-                                null,
-                                "Type %s refers to an ill-formed super type.\n          found: %d; current number of other types %d",
-                                name, superID, types.size());
+                        throw new ParseException(in, blockCounter, null,
+                                "Type %s refers to an ill-formed super type.\n"
+                                        + "          found: %d; current number of other types %d", name, superID,
+                                types.size());
                     else
                         superDef = (StoragePool<? super T, B>) types.get(superID - 1);
                 }

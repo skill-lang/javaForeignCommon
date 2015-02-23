@@ -14,8 +14,8 @@ import de.ust.skill.common.jvm.streams.MappedInStream;
 public class KnownField_SkillID<T extends SkillObject> extends FieldDeclaration<Long, T> implements KnownLongField<T>,
         AutoField {
 
-    public KnownField_SkillID(BasePool<T> owner) {
-        super(V64.get(), "skillid", 0, owner);
+    public KnownField_SkillID(StoragePool<T, ? super T> storagePool) {
+        super(V64.get(), "skillid", 0, storagePool);
     }
 
     @Override

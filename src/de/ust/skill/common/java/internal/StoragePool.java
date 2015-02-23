@@ -156,6 +156,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         this.basePool = null == superPool ? (BasePool<B>) this : superPool.basePool;
         this.knownFields = knownFields;
         fields = new ArrayList<>(1 + knownFields.size());
+        fields.add(new KnownField_SkillID<T>(this));
         this.autoFields = autoFields;
     }
 

@@ -40,7 +40,6 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
 
     public BasePool(long poolIndex, String name, Set<String> knownFields, FieldDeclaration<?, T>[] autoFields) {
         super(poolIndex, name, null, knownFields, autoFields);
-        fields.add(new KnownField_SkillID<T>(this));
     }
 
     @Override
