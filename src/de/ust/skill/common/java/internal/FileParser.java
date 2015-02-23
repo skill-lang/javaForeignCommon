@@ -194,7 +194,7 @@ public abstract class FileParser<State extends SkillState> {
             return new MapType<>(fieldType(), fieldType());
         default:
             if (typeID >= 32)
-                return new TypeDefinitionIndex<>(typeID - 32);
+                return types.get(typeID - 32);
 
             throw new ParseException(in, blockCounter, null, "Invalid type ID: %d", typeID);
         }
@@ -315,8 +315,7 @@ public abstract class FileParser<State extends SkillState> {
             final ArrayList<FieldDeclaration<?, T>> fields = definition.fields;
             int totalFieldCount = fields.size();
 
-            final int localFieldCount = (int) in.v64();
-            for (int fieldCounter = 0; fieldCounter < localFieldCount; fieldCounter++) {
+            for (int fieldCounter = (int) in.v64(); fieldCounter != 0; fieldCounter--) {
                 final int ID = (int) in.v64();
                 if (ID > totalFieldCount || ID < 0)
                     throw new ParseException(in, blockCounter, null, "Found an illegal field ID: %d", ID);
@@ -389,7 +388,6 @@ public abstract class FileParser<State extends SkillState> {
         // insert fields
         for (InsertionEntry e : fieldInsertionQueue) {
             FieldDeclaration<?, ?> f = e.owner.addField(e.ID, e.type, e.name, e.restrictions);
-            f.eliminatePreliminaryTypes(types, StringType, Annotation);
             f.addChunk(e.bci);
         }
 
@@ -410,12 +408,6 @@ public abstract class FileParser<State extends SkillState> {
         // offsets to absolute positions
         for (DataEntry e : fieldDataQueue) {
             final FieldDeclaration<?, ?> f = e.owner.fields.get(e.fieldID);
-            try {
-                f.eliminatePreliminaryTypes(types, StringType, Annotation);
-            } catch (Exception ex) {
-                throw new ParseException(in, blockCounter, ex, "inexistent user type %d (user types: %s)",
-                        f.type.typeID, poolByName.keySet().toString());
-            }
 
             // make begin/end absolute
             f.addOffsetToLastChunk(fileOffset);

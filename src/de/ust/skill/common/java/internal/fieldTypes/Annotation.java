@@ -14,15 +14,6 @@ import de.ust.skill.common.jvm.streams.InStream;
  */
 public final class Annotation extends FieldType<SkillObject> implements ReferenceType {
 
-    private static final Annotation temporaryInstance = new Annotation(null);
-
-    /**
-     * @return temporary type required for state construction intermediate state
-     */
-    public static Annotation tmp() {
-        return temporaryInstance;
-    }
-
     private final ArrayList<StoragePool<?, ?>> types;
 
     /**

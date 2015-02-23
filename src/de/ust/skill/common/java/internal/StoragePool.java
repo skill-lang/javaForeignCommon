@@ -75,9 +75,20 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     /**
-     * @note the fieldIndex is either identical to the position in fields or it is an auto field
+     * @note the fieldIndex is either identical to the position in fields; 0 is used for skillID
      */
     protected final ArrayList<FieldDeclaration<?, T>> fields;
+
+    /**
+     * all fields that are declared as auto
+     */
+    protected final FieldDeclaration<?, T>[] autoFields;
+    private static final FieldDeclaration<?, ?>[] noAutoFields = new FieldDeclaration<?, ?>[0];
+
+    @SuppressWarnings("unchecked")
+    protected static <T extends SkillObject> FieldDeclaration<?, T>[] noAutoFields() {
+        return (FieldDeclaration<?, T>[]) noAutoFields;
+    }
 
     /**
      * The block layout of instances of this pool.
@@ -137,13 +148,15 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      *       the base pool can not be an argument to the constructor. The cast will never fail anyway.
      */
     @SuppressWarnings("unchecked")
-    StoragePool(long poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields) {
+    StoragePool(long poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields,
+            FieldDeclaration<?, T>[] autoFields) {
         super(32L + poolIndex);
         this.name = name;
         this.superPool = superPool;
         this.basePool = null == superPool ? (BasePool<B>) this : superPool.basePool;
         this.knownFields = knownFields;
         fields = new ArrayList<>(1 + knownFields.size());
+        this.autoFields = autoFields;
     }
 
     /**
@@ -280,6 +293,6 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      * used internally for type forest construction
      */
     public <S extends T> StoragePool<S, B> makeSubPool(int index, String name) {
-        return new SubPool<S, B>(index, name, this, Collections.emptySet());
+        return new SubPool<S, B>(index, name, this, Collections.emptySet(), noAutoFields());
     }
 }

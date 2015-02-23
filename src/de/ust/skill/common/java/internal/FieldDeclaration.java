@@ -1,13 +1,9 @@
 package de.ust.skill.common.java.internal;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 
 import de.ust.skill.common.java.api.Access;
-import de.ust.skill.common.java.internal.fieldTypes.Annotation;
-import de.ust.skill.common.java.internal.fieldTypes.CompoundType;
-import de.ust.skill.common.java.internal.fieldTypes.StringType;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.MappedInStream;
@@ -46,7 +42,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      * 
      * @note this is 0 iff the field will not be serialized (auto & skillID)
      */
-    final long index;
+    final int index;
 
     /**
      * the enclosing storage pool
@@ -78,7 +74,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
         return owner;
     }
 
-    public FieldDeclaration(FieldType<T> type, String name, long index, StoragePool<Obj, ? super Obj> owner) {
+    public FieldDeclaration(FieldType<T> type, String name, int index, StoragePool<Obj, ? super Obj> owner) {
         this.type = type;
         this.name = name.intern(); // we will switch on names, thus we need to
                                    // intern them
@@ -140,26 +136,4 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      * Read data from a mapped input stream and set it accordingly
      */
     public abstract void read(MappedInStream in);
-
-    /**
-     * remove types that stem from intermediate parsing state
-     * 
-     * @note unchecked, because Java can not know that types will always contain
-     *       the right type
-     */
-    @SuppressWarnings("unchecked")
-    public final void eliminatePreliminaryTypes(ArrayList<StoragePool<?, ?>> types, StringType string,
-            Annotation annotation) {
-        // user types
-        final int typeID = (int) type.typeID;
-        if (typeID >= 32 && type instanceof TypeDefinitionIndex<?>)
-            type = (FieldType<T>) types.get(typeID - 32);
-        // builtins
-        else if (type instanceof CompoundType<?>)
-            type = ((CompoundType<T>) type).eliminatePreliminaryTypes(types);
-        else if (type instanceof StringType)
-            type = (FieldType<T>) string;
-        else if (type instanceof Annotation)
-            type = (FieldType<T>) annotation;
-    }
 }

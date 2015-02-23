@@ -18,7 +18,7 @@ import de.ust.skill.common.jvm.streams.MappedInStream;
  */
 public final class LazyField<T, Obj extends SkillObject> extends DistributedField<T, Obj> {
 
-    public LazyField(FieldType<T> type, String name, long index, StoragePool<Obj, ? super Obj> owner) {
+    public LazyField(FieldType<T> type, String name, int index, StoragePool<Obj, ? super Obj> owner) {
         super(type, name, index, owner);
     }
 
