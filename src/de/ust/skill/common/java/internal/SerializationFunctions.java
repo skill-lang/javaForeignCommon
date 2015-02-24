@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import de.ust.skill.common.java.internal.fieldTypes.ConstantLengthArray;
+import de.ust.skill.common.java.internal.fieldTypes.MapType;
+import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.iterators.Iterators;
@@ -166,10 +168,11 @@ abstract public class SerializationFunctions {
             long result = 0L;
             Block b = p.blocks.getLast();
             Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+            FieldType<?> g = ((SingleArgumentType<?, ?>) f.type).groundType;
             while (is.hasNext()) {
                 Collection<?> xs = (Collection<?>) is.next().get(f);
                 result += encodeSingleV64(xs.size());
-                result += encode(xs, ((ConstantLengthArray<?>) f.type).groundType);
+                result += encode(xs, g);
             }
 
             return result;
@@ -187,10 +190,13 @@ abstract public class SerializationFunctions {
             long result = 0L;
             Block b = p.blocks.getLast();
             Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+            FieldType<?> kt = ((MapType<?, ?>) f.type).keyType;
+            FieldType<?> vt = ((MapType<?, ?>) f.type).valueType;
             while (is.hasNext()) {
-                HashMap<?, ?> xs = (HashMap<?, ?>) is.next().get(f);
-                result += encodeSingleV64(xs.size());
-                result += encode(xs, ((ConstantLengthArray<?>) f.type).groundType);
+                final HashMap<?, ?> m = (HashMap<?, ?>) is.next().get(f);
+                result += encodeSingleV64(m.size());
+                result += encode(m.keySet(), kt);
+                result += encode(m.values(), vt);
             }
 
             return result;
@@ -428,9 +434,36 @@ abstract public class SerializationFunctions {
         // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i, t)
         // }
         //
+        case 17:
+        case 18:
+        case 19: {
+            long result = 0L;
+            Collection<Collection<?>> is = (Collection<Collection<?>>) xs;
+            FieldType<?> g = ((SingleArgumentType<?, ?>) f).groundType;
+            for (Collection<?> i : is) {
+                result += encodeSingleV64(i.size());
+                result += encode(i, g);
+            }
+
+            return result;
+        }
+
         // case MapType(k, v) ⇒ xs.asInstanceOf[Iterable[HashMap[_, _]]].foldLeft(0L) {
         // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i.keys, k) + encode(i.values, v)
         // }
+        case 20: {
+            long result = 0L;
+            Collection<HashMap<?, ?>> ms = (Collection<HashMap<?, ?>>) xs;
+            FieldType<?> kt = ((MapType<?, ?>) f).keyType;
+            FieldType<?> vt = ((MapType<?, ?>) f).valueType;
+            for (final HashMap<?, ?> m : ms) {
+                result += encodeSingleV64(m.size());
+                result += encode(m.keySet(), kt);
+                result += encode(m.values(), vt);
+            }
+
+            return result;
+        }
 
         // case t : StoragePool[_, _] ⇒
         // if (t.base.size < 128) xs.size // quick solution for small pools

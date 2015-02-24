@@ -212,7 +212,7 @@ public abstract class FileParser<State extends SkillState> {
                 break;
 
             case 3:
-                final FieldRestriction<?> r = Range.make((int) t.typeID, in);
+                final FieldRestriction<?> r = Range.make(t.typeID, in);
                 if (null == r)
                     throw new ParseException(in, blockCounter, null, "Type %s can not be range restricted!",
                             t.toString());
@@ -307,8 +307,7 @@ public abstract class FileParser<State extends SkillState> {
             // resize base pools and push entries to stack
             for (StoragePool<?, ?> p : resizeQueue) {
                 if (p instanceof BasePool<?>) {
-                    final ArrayList<Block> bs = p.blocks;
-                    final Block last = bs.get(bs.size() - 1);
+                    final Block last = p.blocks.getLast();
                     ((BasePool<?>) p).resizeData((int) last.count);
                 }
                 resizeStack.push(p);
@@ -317,8 +316,7 @@ public abstract class FileParser<State extends SkillState> {
             // create instances from stack
             while (!resizeStack.isEmpty()) {
                 StoragePool<?, ?> p = resizeStack.pop();
-                final ArrayList<Block> bs = p.blocks;
-                final Block last = bs.get(bs.size() - 1);
+                final Block last = p.blocks.getLast();
                 int i = (int) last.bpo;
                 int high = (int) (last.bpo + last.count);
                 while (i < high && p.insertInstance(i + 1))
