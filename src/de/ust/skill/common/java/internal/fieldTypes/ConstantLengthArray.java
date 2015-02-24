@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
 
-public final class ConstantLengthArray<T> extends IntegerType<ArrayList<T>> {
-    public final FieldType<T> groundType;
+public final class ConstantLengthArray<T> extends SingleArgumentType<ArrayList<T>, T> {
     public final long length;
 
     public ConstantLengthArray(long length, FieldType<T> groundType) {
-        super(15);
-        this.groundType = groundType;
+        super(15, groundType);
         this.length = length;
     }
 

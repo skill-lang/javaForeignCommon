@@ -1,9 +1,14 @@
 package de.ust.skill.common.java.internal;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 
+import de.ust.skill.common.java.internal.fieldTypes.ConstantLengthArray;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
+import de.ust.skill.common.java.internal.parts.Block;
+import de.ust.skill.common.java.iterators.Iterators;
 import de.ust.skill.common.jvm.streams.OutStream;
 
 /**
@@ -68,7 +73,8 @@ abstract public class SerializationFunctions {
      * ************************************************
      */
 
-    protected final long offset(StoragePool<?, ?> p, FieldDeclaration<?, ?> f) {
+    @SuppressWarnings("unchecked")
+    protected final <T extends B, B extends SkillObject> long offset(StoragePool<T, B> p, FieldDeclaration<?, T> f) {
         switch (f.type.typeID) {
         // case ConstantI8(_) | ConstantI16(_) | ConstantI32(_) | ConstantI64(_) | ConstantV64(_) ⇒ 0
         case 0:
@@ -99,22 +105,34 @@ abstract public class SerializationFunctions {
 
             // case V64 ⇒ encodeV64(p, f)
         case 11:
-            // <- das darf nicht über reflection laufen, sonst ist man am arsch
-            encodeV64(p, f);
+            return encodeV64(p, (FieldDeclaration<Long, T>) f);
+
+            // case s : Annotation ⇒ p.all.map(_.get(f).asInstanceOf[SkillType]).foldLeft(0L)((r : Long, v : SkillType)
+            // ⇒ r + encodeSingleV64(1 + state.poolByName(v.getClass.getName.toLowerCase).poolIndex) +
+            // encodeSingleV64(v.getSkillID))
+        case 5: {
+            FieldDeclaration<SkillObject, T> field = (FieldDeclaration<SkillObject, T>) f;
+            long result = 0L;
+            for (T i : p) {
+                SkillObject ref = i.get(field);
+                result += encodeSingleV64(1 + state.poolByName().get(ref.getClass().getName().toLowerCase()).typeID - 32);
+                result += encodeSingleV64(ref.getSkillID());
+            }
+            return result;
         }
 
-        // case s : Annotation ⇒ p.all.map(_.get(f).asInstanceOf[SkillType]).foldLeft(0L)((r : Long, v : SkillType) ⇒ r
-        // + encodeSingleV64(1 + state.poolByName(v.getClass.getName.toLowerCase).poolIndex) +
-        // encodeSingleV64(v.getSkillID))
         // case s : StringType ⇒ p.all.map(_.get(f).asInstanceOf[String]).foldLeft(0L)((r : Long, v : String) ⇒ r +
         // encodeSingleV64(stringIDs(v)))
-        //
-        // case s : StoragePool[_, _] ⇒
-        // if (p.blockInfos.last.count < 128) p.blockInfos.last.count // quick solution for small pools
-        // else {
-        // encodeRefs(p, f)
-        // }
-        //
+        case 14: {
+            FieldDeclaration<String, T> field = (FieldDeclaration<String, T>) f;
+            long result = 0L;
+            for (T i : p) {
+                String v = i.get(field);
+                result += encodeSingleV64(stringIDs.get(v));
+            }
+            return result;
+        }
+
         // case ConstantLengthArray(l, t) ⇒
         // val b = p.blockInfos.last
         // p.basePool.data.view(b.bpo.toInt, (b.bpo + b.count).toInt).foldLeft(0L) {
@@ -122,20 +140,19 @@ abstract public class SerializationFunctions {
         // val xs = i.get(f).asInstanceOf[Iterable[_]];
         // sum + encode(xs, t)
         // }
-        // case VariableLengthArray(t) ⇒
-        // val b = p.blockInfos.last
-        // p.basePool.data.view(b.bpo.toInt, (b.bpo + b.count).toInt).foldLeft(0L) {
-        // case (sum, i) ⇒
-        // val xs = i.get(f).asInstanceOf[Iterable[_]];
-        // sum + encodeSingleV64(xs.size) + encode(xs, t)
-        // }
-        // case ListType(t) ⇒
-        // val b = p.blockInfos.last
-        // p.basePool.data.view(b.bpo.toInt, (b.bpo + b.count).toInt).foldLeft(0L) {
-        // case (sum, i) ⇒
-        // val xs = i.get(f).asInstanceOf[Iterable[_]];
-        // sum + encodeSingleV64(xs.size) + encode(xs, t)
-        // }
+        case 15: {
+            long result = 0L;
+            Block b = p.blocks.getLast();
+            Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+            while (is.hasNext()) {
+                result += encode((Collection<?>) is.next().get(f), ((ConstantLengthArray<?>) f.type).groundType);
+            }
+
+            return result;
+        }
+
+        // case VariableLengthArray(t) ⇒ [...]
+        // case ListType(t) ⇒ [...]
         // case SetType(t) ⇒
         // val b = p.blockInfos.last
         // p.basePool.data.view(b.bpo.toInt, (b.bpo + b.count).toInt).foldLeft(0L) {
@@ -143,6 +160,21 @@ abstract public class SerializationFunctions {
         // val xs = i.get(f).asInstanceOf[Iterable[_]];
         // sum + encodeSingleV64(xs.size) + encode(xs, t)
         // }
+        case 17:
+        case 18:
+        case 19: {
+            long result = 0L;
+            Block b = p.blocks.getLast();
+            Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+            while (is.hasNext()) {
+                Collection<?> xs = (Collection<?>) is.next().get(f);
+                result += encodeSingleV64(xs.size());
+                result += encode(xs, ((ConstantLengthArray<?>) f.type).groundType);
+            }
+
+            return result;
+        }
+
         //
         // case MapType(k, v) ⇒
         // val b = p.blockInfos.last
@@ -151,178 +183,267 @@ abstract public class SerializationFunctions {
         // val m = i.get(f).asInstanceOf[HashMap[_, _]];
         // sum + encodeSingleV64(m.size) + encode(m.keys, k) + encode(m.values, v)
         // }
+        case 20: {
+            long result = 0L;
+            Block b = p.blocks.getLast();
+            Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+            while (is.hasNext()) {
+                HashMap<?, ?> xs = (HashMap<?, ?>) is.next().get(f);
+                result += encodeSingleV64(xs.size());
+                result += encode(xs, ((ConstantLengthArray<?>) f.type).groundType);
+            }
 
+            return result;
+        }
+
+        // case s : StoragePool[_, _] ⇒
+        // if (s.base.size < 128) p.blockInfos.last.count // quick solution for small pools
+        // else {
+        // encodeRefs(p, f)
+        // }
+        default:
+            StoragePool<?, ?> target = (StoragePool<?, ?>) f.type;
+            // shortcut if references are small anyway
+            if (target.basePool.size() < 128)
+                return p.blocks.getLast().count;
+
+            return encodeRefs(p, (FieldDeclaration<? extends SkillObject, T>) f);
+        }
     }
 
-    // @inline private[this] def encodeSingleV64(v : Long) : Long = {
-    // if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
-    // 1
-    // } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
-    // 2
-    // } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
-    // 3
-    // } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
-    // 4
-    // } else if (0L == (v & 0xFFFFFFF800000000L)) {
-    // 5
-    // } else if (0L == (v & 0xFFFFFC0000000000L)) {
-    // 6
-    // } else if (0L == (v & 0xFFFE000000000000L)) {
-    // 7
-    // } else if (0L == (v & 0xFF00000000000000L)) {
-    // 8
-    // } else {
-    // 9
-    // }
-    // }
-    //
-    // @inline private[this] def encodeV64(p : StoragePool[_ <: SkillType, _ <: SkillType], f : FieldDeclaration[_]) :
-    // Long = {
-    // var result = 0L
-    // val b = p.blockInfos.last
-    // for (i ← p.basePool.data.view(b.bpo.toInt, (b.bpo + b.count).toInt)) {
-    // val v = i.get(f).asInstanceOf[Long]
-    // if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
-    // result += 1
-    // } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
-    // result += 2
-    // } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
-    // result += 3
-    // } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
-    // result += 4
-    // } else if (0L == (v & 0xFFFFFFF800000000L)) {
-    // result += 5
-    // } else if (0L == (v & 0xFFFFFC0000000000L)) {
-    // result += 6
-    // } else if (0L == (v & 0xFFFE000000000000L)) {
-    // result += 7
-    // } else if (0L == (v & 0xFF00000000000000L)) {
-    // result += 8
-    // } else {
-    // result += 9
-    // }
-    // }
-    // result
-    // }
-    //
-    // @inline private[this] def encodeV64(p : Iterable[Long]) : Long = {
-    // var result = 0L
-    // for (v ← p) {
-    // if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
-    // result += 1
-    // } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
-    // result += 2
-    // } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
-    // result += 3
-    // } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
-    // result += 4
-    // } else if (0L == (v & 0xFFFFFFF800000000L)) {
-    // result += 5
-    // } else if (0L == (v & 0xFFFFFC0000000000L)) {
-    // result += 6
-    // } else if (0L == (v & 0xFFFE000000000000L)) {
-    // result += 7
-    // } else if (0L == (v & 0xFF00000000000000L)) {
-    // result += 8
-    // } else {
-    // result += 9
-    // }
-    // }
-    // result
-    // }
-    //
-    // @inline private[this] def encodeRefs(p : StoragePool[_ <: SkillType, _ <: SkillType], f : FieldDeclaration[_]) :
-    // Long = {
-    // var result = 0L
-    // val b = p.blockInfos.last
-    // for (i ← p.basePool.data.view(b.bpo.toInt, (b.bpo + b.count).toInt)) {
-    // val v = i.get(f).asInstanceOf[SkillType].getSkillID
-    // if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
-    // result += 1
-    // } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
-    // result += 2
-    // } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
-    // result += 3
-    // } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
-    // result += 4
-    // } else if (0L == (v & 0xFFFFFFF800000000L)) {
-    // result += 5
-    // } else if (0L == (v & 0xFFFFFC0000000000L)) {
-    // result += 6
-    // } else if (0L == (v & 0xFFFE000000000000L)) {
-    // result += 7
-    // } else if (0L == (v & 0xFF00000000000000L)) {
-    // result += 8
-    // } else {
-    // result += 9
-    // }
-    // }
-    // result
-    // }
-    //
-    // @inline private[this] def encodeRefs(p : Iterable[SkillType]) : Long = {
-    // var result = 0L
-    // for (i ← p) {
-    // val v = i.getSkillID
-    // if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
-    // result += 1
-    // } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
-    // result += 2
-    // } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
-    // result += 3
-    // } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
-    // result += 4
-    // } else if (0L == (v & 0xFFFFFFF800000000L)) {
-    // result += 5
-    // } else if (0L == (v & 0xFFFFFC0000000000L)) {
-    // result += 6
-    // } else if (0L == (v & 0xFFFE000000000000L)) {
-    // result += 7
-    // } else if (0L == (v & 0xFF00000000000000L)) {
-    // result += 8
-    // } else {
-    // result += 9
-    // }
-    // }
-    // result
-    // }
-    //
-    // private[this] def encode[T](xs : Iterable[T], t : FieldType[_]) : Long = t match {
-    // case ConstantI8(_) | ConstantI16(_) | ConstantI32(_) | ConstantI64(_) | ConstantV64(_) ⇒ 0
-    // case BoolType | I8 ⇒ xs.size
-    // case I16 ⇒ 2 * xs.size
-    // case F32 | I32 ⇒ 4 * xs.size
-    // case F64 | I64 ⇒ 8 * xs.size
-    //
-    // case V64 ⇒ encodeV64(xs.asInstanceOf[Iterable[Long]])
-    // case s : Annotation ⇒ xs.asInstanceOf[Iterable[SkillType]].foldLeft(0L)((r : Long, v : SkillType) ⇒ r +
-    // encodeSingleV64(1 + state.poolByName(v.getClass.getName.toLowerCase).poolIndex) + encodeSingleV64(v.getSkillID))
-    // case s : StringType ⇒ xs.asInstanceOf[Iterable[String]].foldLeft(0L)((r : Long, v : String) ⇒ r +
-    // encodeSingleV64(stringIDs(v)))
-    //
-    // case t : StoragePool[_, _] ⇒
-    // if (t.blockInfos.last.count < 128) xs.size // quick solution for small pools
-    // else encodeRefs(xs.asInstanceOf[Iterable[SkillType]])
-    //
-    // case ConstantLengthArray(l, t) ⇒ xs.asInstanceOf[Iterable[ArrayBuffer[_]]].foldLeft(0L) {
-    // case (sum, i) ⇒ sum + encode(i, t)
-    // }
-    // case VariableLengthArray(t) ⇒ xs.asInstanceOf[Iterable[ArrayBuffer[_]]].foldLeft(0L) {
-    // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i, t)
-    // }
-    // case ListType(t) ⇒ xs.asInstanceOf[Iterable[ListBuffer[_]]].foldLeft(0L) {
-    // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i, t)
-    // }
-    // case SetType(t) ⇒ xs.asInstanceOf[Iterable[HashSet[_]]].foldLeft(0L) {
-    // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i, t)
-    // }
-    //
-    // case MapType(k, v) ⇒ xs.asInstanceOf[Iterable[HashMap[_, _]]].foldLeft(0L) {
-    // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i.keys, k) + encode(i.values, v)
-    // }
-    //
-    // case TypeDefinitionIndex(_) | TypeDefinitionName(_) ⇒ ??? // should have been eliminated already
-    // }
+    // TODO turn this into dead code or die a performance death
+    private final static long encodeSingleV64(long v) {
+        if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
+            return 1;
+        } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
+            return 2;
+        } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
+            return 3;
+        } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
+            return 4;
+        } else if (0L == (v & 0xFFFFFFF800000000L)) {
+            return 5;
+        } else if (0L == (v & 0xFFFFFC0000000000L)) {
+            return 6;
+        } else if (0L == (v & 0xFFFE000000000000L)) {
+            return 7;
+        } else if (0L == (v & 0xFF00000000000000L)) {
+            return 8;
+        } else {
+            return 9;
+        }
+    }
+
+    // TODO create interface VariableLengthDataField and move this method to the field, because generic access is going
+    // to kill us
+    private final static <T extends B, B extends SkillObject> long encodeV64(StoragePool<T, B> p,
+            FieldDeclaration<Long, T> f) {
+        long result = 0L;
+        Block b = p.blocks.getLast();
+        Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+        while (is.hasNext()) {
+            T i = is.next();
+            long v = i.get(f);
+            if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
+                result += 1;
+            } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
+                result += 2;
+            } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
+                result += 3;
+            } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
+                result += 4;
+            } else if (0L == (v & 0xFFFFFFF800000000L)) {
+                result += 5;
+            } else if (0L == (v & 0xFFFFFC0000000000L)) {
+                result += 6;
+            } else if (0L == (v & 0xFFFE000000000000L)) {
+                result += 7;
+            } else if (0L == (v & 0xFF00000000000000L)) {
+                result += 8;
+            } else {
+                result += 9;
+            }
+        }
+        return result;
+    }
+
+    private final static long encodeV64(Iterable<Long> vs) {
+        long result = 0L;
+        for (long v : vs) {
+            if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
+                result += 1;
+            } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
+                result += 2;
+            } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
+                result += 3;
+            } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
+                result += 4;
+            } else if (0L == (v & 0xFFFFFFF800000000L)) {
+                result += 5;
+            } else if (0L == (v & 0xFFFFFC0000000000L)) {
+                result += 6;
+            } else if (0L == (v & 0xFFFE000000000000L)) {
+                result += 7;
+            } else if (0L == (v & 0xFF00000000000000L)) {
+                result += 8;
+            } else {
+                result += 9;
+            }
+        }
+        return result;
+    }
+
+    private final static <T extends B, B extends SkillObject> long encodeRefs(StoragePool<T, B> p,
+            FieldDeclaration<? extends SkillObject, T> f) {
+        long result = 0L;
+        Block b = p.blocks.getLast();
+        Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+        while (is.hasNext()) {
+            T i = is.next();
+            long v = i.get(f).getSkillID();
+            if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
+                result += 1;
+            } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
+                result += 2;
+            } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
+                result += 3;
+            } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
+                result += 4;
+            } else if (0L == (v & 0xFFFFFFF800000000L)) {
+                result += 5;
+            } else if (0L == (v & 0xFFFFFC0000000000L)) {
+                result += 6;
+            } else if (0L == (v & 0xFFFE000000000000L)) {
+                result += 7;
+            } else if (0L == (v & 0xFF00000000000000L)) {
+                result += 8;
+            } else {
+                result += 9;
+            }
+        }
+        return result;
+    }
+
+    private final static long encodeRefs(Iterable<? extends SkillObject> is) {
+        long result = 0L;
+        for (SkillObject i : is) {
+            long v = i.getSkillID();
+            if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
+                result += 1;
+            } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
+                result += 2;
+            } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
+                result += 3;
+            } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
+                result += 4;
+            } else if (0L == (v & 0xFFFFFFF800000000L)) {
+                result += 5;
+            } else if (0L == (v & 0xFFFFFC0000000000L)) {
+                result += 6;
+            } else if (0L == (v & 0xFFFE000000000000L)) {
+                result += 7;
+            } else if (0L == (v & 0xFF00000000000000L)) {
+                result += 8;
+            } else {
+                result += 9;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * same as offset, but operates on collections
+     */
+    @SuppressWarnings("unchecked")
+    private final <T> long encode(Collection<T> xs, FieldType<?> f) {
+        switch (f.typeID) {
+
+        // case ConstantI8(_) | ConstantI16(_) | ConstantI32(_) | ConstantI64(_) | ConstantV64(_) ⇒ 0
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            return 0;
+
+            // case BoolType | I8 ⇒ p.blockInfos.last.count
+            // case BoolType | I8 ⇒ xs.size
+        case 6:
+        case 7:
+            return xs.size();
+
+            // case I16 ⇒ 2 * xs.size
+        case 8:
+            return 2 * xs.size();
+
+            // case F32 | I32 ⇒ 4 * xs.size
+        case 9:
+        case 12:
+            return 4 * xs.size();
+
+            // case F64 | I64 ⇒ 8 * xs.size
+        case 10:
+        case 13:
+            return 8 * xs.size();
+
+            // case V64 ⇒ encodeV64(xs.asInstanceOf[Iterable[Long]])
+        case 11:
+            return encodeV64((Iterable<Long>) xs);
+
+            // case s : Annotation ⇒ xs.asInstanceOf[Iterable[SkillType]].foldLeft(0L)((r : Long, v : SkillType) ⇒ r +
+            // encodeSingleV64(1 + state.poolByName(v.getClass.getName.toLowerCase).poolIndex) +
+            // encodeSingleV64(v.getSkillID))
+        case 5: {
+            long result = 0L;
+            Iterable<? extends SkillObject> rs = (Iterable<? extends SkillObject>) xs;
+            for (SkillObject ref : rs) {
+                result += encodeSingleV64(1 + state.poolByName().get(ref.getClass().getName().toLowerCase()).typeID - 32);
+                result += encodeSingleV64(ref.getSkillID());
+            }
+            return result;
+        }
+
+        // case s : StringType ⇒ xs.asInstanceOf[Iterable[String]].foldLeft(0L)((r : Long, v : String) ⇒ r +
+        // encodeSingleV64(stringIDs(v)))
+        case 14: {
+            Iterable<String> vs = (Iterable<String>) xs;
+            long result = 0L;
+            for (String v : vs) {
+                result += encodeSingleV64(stringIDs.get(v));
+            }
+            return result;
+        }
+
+        //
+        // case ConstantLengthArray(l, t) ⇒ xs.asInstanceOf[Iterable[ArrayBuffer[_]]].foldLeft(0L) {
+        // case (sum, i) ⇒ sum + encode(i, t)
+        // }
+        // case VariableLengthArray(t) ⇒ xs.asInstanceOf[Iterable[ArrayBuffer[_]]].foldLeft(0L) {
+        // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i, t)
+        // }
+        // case ListType(t) ⇒ xs.asInstanceOf[Iterable[ListBuffer[_]]].foldLeft(0L) {
+        // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i, t)
+        // }
+        // case SetType(t) ⇒ xs.asInstanceOf[Iterable[HashSet[_]]].foldLeft(0L) {
+        // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i, t)
+        // }
+        //
+        // case MapType(k, v) ⇒ xs.asInstanceOf[Iterable[HashMap[_, _]]].foldLeft(0L) {
+        // case (sum, i) ⇒ sum + encodeSingleV64(i.size) + encode(i.keys, k) + encode(i.values, v)
+        // }
+
+        // case t : StoragePool[_, _] ⇒
+        // if (t.base.size < 128) xs.size // quick solution for small pools
+        // else encodeRefs(xs.asInstanceOf[Iterable[SkillType]])
+        default:
+            StoragePool<?, ?> target = (StoragePool<?, ?>) f;
+            // shortcut if references are small anyway
+            if (target.basePool.size() < 128)
+                return xs.size();
+
+            return encodeRefs((Iterable<? extends SkillObject>) xs);
+        }
+    }
     //
     // // TODO this is not a good solution! (slow and fucked up, but funny)
     // def typeToSerializationFunction(t : FieldType[_]) : (Any, OutStream) ⇒ Unit = {

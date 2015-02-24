@@ -8,7 +8,7 @@ import de.ust.skill.common.java.internal.FieldType;
  * @author Timm Felden
  */
 public abstract class FloatType<T> extends FieldType<T> {
-    protected FloatType(long typeID) {
+    protected FloatType(int typeID) {
         super(typeID);
     }
 }

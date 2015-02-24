@@ -5,12 +5,10 @@ import java.util.LinkedList;
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
 
-public final class ListType<T> extends IntegerType<LinkedList<T>> {
-    public final FieldType<T> groundType;
+public final class ListType<T> extends SingleArgumentType<LinkedList<T>, T> {
 
     public ListType(FieldType<T> groundType) {
-        super(18);
-        this.groundType = groundType;
+        super(18, groundType);
     }
 
     @Override

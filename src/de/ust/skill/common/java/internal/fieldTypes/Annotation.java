@@ -25,6 +25,7 @@ public final class Annotation extends FieldType<SkillObject> implements Referenc
     public Annotation(ArrayList<StoragePool<?, ?>> types) {
         super(5);
         this.types = types;
+        assert types != null;
     }
 
     @Override

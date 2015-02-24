@@ -1,9 +1,6 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
-import java.util.ArrayList;
-
 import de.ust.skill.common.java.internal.FieldType;
-import de.ust.skill.common.java.internal.StoragePool;
 
 /**
  * Super class of all container types.
@@ -11,12 +8,7 @@ import de.ust.skill.common.java.internal.StoragePool;
  * @author Timm Felden
  */
 public abstract class CompoundType<T> extends FieldType<T> {
-    protected CompoundType(long typeID) {
+    protected CompoundType(int typeID) {
         super(typeID);
     }
-
-    /**
-     * used for state construction only!
-     */
-    public abstract CompoundType<T> eliminatePreliminaryTypes(ArrayList<StoragePool<?, ?>> types);
 }

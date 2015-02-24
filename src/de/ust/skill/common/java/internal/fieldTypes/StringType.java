@@ -16,6 +16,7 @@ public final class StringType extends FieldType<String> implements ReferenceType
     public StringType(StringPool strings) {
         super(14);
         this.strings = strings;
+        assert strings != null;
     }
 
     @Override

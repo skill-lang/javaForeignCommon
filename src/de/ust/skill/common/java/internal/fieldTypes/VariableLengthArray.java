@@ -5,12 +5,10 @@ import java.util.ArrayList;
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
 
-public final class VariableLengthArray<T> extends IntegerType<ArrayList<T>> {
-    public final FieldType<T> groundType;
+public final class VariableLengthArray<T> extends SingleArgumentType<ArrayList<T>, T> {
 
     public VariableLengthArray(FieldType<T> groundType) {
-        super(17);
-        this.groundType = groundType;
+        super(17, groundType);
     }
 
     @Override

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
 
-public final class MapType<K, V> extends IntegerType<HashMap<K, V>> {
+public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
     public final FieldType<K> keyType;
     public final FieldType<V> valueType;
 

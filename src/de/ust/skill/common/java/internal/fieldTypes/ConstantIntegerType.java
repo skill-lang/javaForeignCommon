@@ -9,7 +9,7 @@ import de.ust.skill.common.jvm.streams.InStream;
  * @author Timm Felden
  */
 public abstract class ConstantIntegerType<T> extends FieldType<T> {
-    protected ConstantIntegerType(long typeID) {
+    protected ConstantIntegerType(int typeID) {
         super(typeID);
     }
 

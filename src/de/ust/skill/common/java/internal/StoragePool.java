@@ -148,9 +148,9 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      *       the base pool can not be an argument to the constructor. The cast will never fail anyway.
      */
     @SuppressWarnings("unchecked")
-    StoragePool(long poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields,
+    StoragePool(int poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields,
             FieldDeclaration<?, T>[] autoFields) {
-        super(32L + poolIndex);
+        super(32 + poolIndex);
         this.name = name;
         this.superPool = superPool;
         this.basePool = null == superPool ? (BasePool<B>) this : superPool.basePool;

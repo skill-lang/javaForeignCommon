@@ -38,7 +38,7 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      */
     protected SkillState owner = null;
 
-    public BasePool(long poolIndex, String name, Set<String> knownFields, FieldDeclaration<?, T>[] autoFields) {
+    public BasePool(int poolIndex, String name, Set<String> knownFields, FieldDeclaration<?, T>[] autoFields) {
         super(poolIndex, name, null, knownFields, autoFields);
     }
 

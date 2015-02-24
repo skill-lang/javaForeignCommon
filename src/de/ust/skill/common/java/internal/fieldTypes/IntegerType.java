@@ -8,7 +8,7 @@ import de.ust.skill.common.java.internal.FieldType;
  * @author Timm Felden
  */
 public abstract class IntegerType<T> extends FieldType<T> {
-    protected IntegerType(long typeID) {
+    protected IntegerType(int typeID) {
         super(typeID);
     }
 }

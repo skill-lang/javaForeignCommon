@@ -14,7 +14,7 @@ import de.ust.skill.common.java.iterators.Iterators;
  */
 public class SubPool<T extends B, B extends SkillObject> extends StoragePool<T, B> {
 
-    public SubPool(long poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields,
+    public SubPool(int poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields,
             FieldDeclaration<?, T>[] autoFields) {
         super(poolIndex, name, superPool, knownFields, autoFields);
         superPool.subPools.add(this);

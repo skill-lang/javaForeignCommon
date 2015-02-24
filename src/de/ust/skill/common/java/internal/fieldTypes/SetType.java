@@ -5,12 +5,10 @@ import java.util.HashSet;
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
 
-public final class SetType<T> extends IntegerType<HashSet<T>> {
-    public final FieldType<T> groundType;
+public final class SetType<T> extends SingleArgumentType<HashSet<T>, T> {
 
     public SetType(FieldType<T> groundType) {
-        super(19);
-        this.groundType = groundType;
+        super(19, groundType);
     }
 
     @Override
