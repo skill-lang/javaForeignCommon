@@ -1,6 +1,9 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
+
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 public final class I16 extends IntegerType<Short> {
     private final static I16 instance = new I16();
@@ -16,6 +19,11 @@ public final class I16 extends IntegerType<Short> {
     @Override
     public Short readSingleField(InStream in) {
         return in.i16();
+    }
+
+    @Override
+    public void writeSingleField(Short target, OutStream out) throws IOException {
+        out.i16(target);
     }
 
     @Override

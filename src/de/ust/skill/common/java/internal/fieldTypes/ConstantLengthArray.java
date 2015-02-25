@@ -1,9 +1,11 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 public final class ConstantLengthArray<T> extends SingleArgumentType<ArrayList<T>, T> {
     public final long length;
@@ -19,6 +21,12 @@ public final class ConstantLengthArray<T> extends SingleArgumentType<ArrayList<T
         for (int i = (int) length; i != 0; i--)
             rval.add(groundType.readSingleField(in));
         return rval;
+    }
+
+    @Override
+    public void writeSingleField(ArrayList<T> elements, OutStream out) throws IOException {
+        for (T e : elements)
+            groundType.writeSingleField(e, out);
     }
 
     @Override

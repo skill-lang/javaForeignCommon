@@ -1,8 +1,10 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
 import java.util.Collection;
 
 import de.ust.skill.common.java.internal.FieldType;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 /**
  * Super class of all container types with one type argument.
@@ -15,5 +17,12 @@ public abstract class SingleArgumentType<T extends Collection<Base>, Base> exten
     public SingleArgumentType(int typeID, FieldType<Base> groundType) {
         super(typeID);
         this.groundType = groundType;
+    }
+
+    @Override
+    public void writeSingleField(T elements, OutStream out) throws IOException {
+        out.v64(elements.size());
+        for (Base e : elements)
+            groundType.writeSingleField(e, out);
     }
 }

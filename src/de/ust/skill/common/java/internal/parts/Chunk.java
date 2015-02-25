@@ -21,8 +21,6 @@ public abstract class Chunk {
      * @param end
      *            position of the last byte, i.e. the first byte that is not
      *            read
-     * @param bpo
-     *            the offset of the first instance
      * @param count
      *            the number of instances in this chunk
      */

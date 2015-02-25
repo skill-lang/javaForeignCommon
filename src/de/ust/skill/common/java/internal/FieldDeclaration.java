@@ -14,6 +14,7 @@ import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
 import de.ust.skill.common.jvm.streams.MappedInStream;
+import de.ust.skill.common.jvm.streams.MappedOutStream;
 
 /**
  * Actual implementation as used by all bindings.
@@ -163,6 +164,15 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
     protected abstract void read(MappedInStream in, Chunk last);
 
     /**
+     * write data into a map at the end of a write/append operation
+     * 
+     * @note this will always write the last chunk, as, in contrast to read, it is impossible to write to fields in
+     *       parallel
+     * @note only called, if there actually is field data to be written
+     */
+    public abstract void write(MappedOutStream out);
+
+    /**
      * Coordinates reads and prevents from state corruption using the barrier.
      * 
      * @param barrier
@@ -190,14 +200,6 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
                             readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
                     } catch (BufferUnderflowException e) {
                         readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f, e));
-                        synchronized (this) {
-                            System.out.println(f.name);
-                            System.out.println(last.getClass().getName());
-                            System.out.println(last.begin);
-                            System.out.println(last.end);
-                            System.out.println(last.count);
-                            System.out.println(map.position());
-                        }
                     } catch (SkillException t) {
                         readErrors.add(t);
                     } catch (Throwable t) {

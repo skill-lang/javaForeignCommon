@@ -1,7 +1,10 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
+
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 /**
  * Constant Integers.
@@ -22,5 +25,10 @@ public abstract class ConstantIntegerType<T> extends FieldType<T> {
     @Override
     public final T readSingleField(InStream in) {
         return value();
+    }
+
+    @Override
+    final public void writeSingleField(T data, OutStream out) throws IOException {
+        // nothing to do
     }
 }

@@ -5,6 +5,7 @@ import de.ust.skill.common.java.internal.fieldDeclarations.KnownLongField;
 import de.ust.skill.common.java.internal.fieldTypes.V64;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.jvm.streams.MappedInStream;
+import de.ust.skill.common.jvm.streams.MappedOutStream;
 
 /**
  * SKilL IDs behave as if they were auto fields of type V64
@@ -41,5 +42,10 @@ public class KnownField_SkillID<T extends SkillObject> extends FieldDeclaration<
     @Override
     protected void read(MappedInStream in, Chunk last) {
         throw new NoSuchMethodError("one can not read auto fields!");
+    }
+
+    @Override
+    public void write(MappedOutStream in) {
+        throw new NoSuchMethodError("one can not write auto fields!");
     }
 }

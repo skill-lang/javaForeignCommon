@@ -1,6 +1,9 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
+
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 public final class F64 extends IntegerType<Double> {
     private final static F64 instance = new F64();
@@ -18,6 +21,10 @@ public final class F64 extends IntegerType<Double> {
         return in.f64();
     }
 
+    @Override
+    public void writeSingleField(Double target, OutStream out) throws IOException {
+        out.f64(target);
+    }
     @Override
     public String toString() {
         return "f64";

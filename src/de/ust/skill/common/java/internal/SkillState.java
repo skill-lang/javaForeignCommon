@@ -68,22 +68,32 @@ public abstract class SkillState implements SkillFile {
 
     }
 
-    private final StringPool strings;
+    final StringPool strings;
+
+    /**
+     * Types required for reflective IO
+     */
+    final StringType stringType;
+    /**
+     * Types required for reflective IO
+     */
+    final Annotation annotationType;
 
     /**
      * Path and mode management can be done for arbitrary states.
      */
-    protected SkillState(StringPool strings, Path path, Mode mode, ArrayList<StoragePool<?, ?>> types) {
+    protected SkillState(StringPool strings, Path path, Mode mode, ArrayList<StoragePool<?, ?>> types,
+            StringType stringType, Annotation annotationType) {
         this.strings = strings;
         this.path = path;
         this.writeMode = mode;
         this.types = types;
+        this.stringType = stringType;
+        this.annotationType = annotationType;
     }
 
     @SuppressWarnings("unchecked")
     protected final void finalizePools() {
-        StringType ts = new StringType((StringPool) Strings());
-        Annotation as = new Annotation((ArrayList<StoragePool<?, ?>>) allTypes());
         ReadBarrier barrier = new ReadBarrier();
         // async reads will post their errors in this queue
         final ConcurrentLinkedQueue<SkillException> readErrors = new ConcurrentLinkedQueue<SkillException>();
@@ -103,7 +113,7 @@ public abstract class SkillState implements SkillFile {
             // ensure existence of known fields
             for (String n : p.knownFields) {
                 if (!fieldNames.contains(n))
-                    p.addKnownField(n, ts, as);
+                    p.addKnownField(n, stringType, annotationType);
             }
 
             // read known fields
@@ -201,8 +211,12 @@ public abstract class SkillState implements SkillFile {
                 // dead
                 break;
             }
+        } catch (SkillException e) {
+            throw e;
         } catch (IOException e) {
-            throw new SkillException("failed to create out stream", e);
+            throw new SkillException("failed to create or complete out stream", e);
+        } catch (Exception e) {
+            throw new SkillException("unexpected exception", e);
         }
     }
 

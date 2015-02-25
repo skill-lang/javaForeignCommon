@@ -1,6 +1,9 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
+
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 public final class F32 extends IntegerType<Float> {
     private final static F32 instance = new F32();
@@ -21,5 +24,10 @@ public final class F32 extends IntegerType<Float> {
     @Override
     public String toString() {
         return "f32";
+    }
+
+    @Override
+    public void writeSingleField(Float data, OutStream out) throws IOException {
+        out.f32(data);
     }
 }

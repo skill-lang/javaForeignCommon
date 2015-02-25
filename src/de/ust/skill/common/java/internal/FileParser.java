@@ -56,7 +56,7 @@ public abstract class FileParser<State extends SkillState> {
     // types
     protected final ArrayList<StoragePool<?, ?>> types = new ArrayList<>();
     protected final HashMap<String, StoragePool<?, ?>> poolByName = new HashMap<>();
-    final Annotation Annotation = new Annotation(types);
+    final Annotation Annotation;
     final StringType StringType;
 
     /**
@@ -71,6 +71,7 @@ public abstract class FileParser<State extends SkillState> {
         this.in = in;
         Strings = new StringPool(in);
         StringType = new StringType(Strings);
+        Annotation = new Annotation(types, StringType);
     }
 
     final protected void stringBlock() throws ParseException {

@@ -1,6 +1,9 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.IOException;
+
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 /**
  * Top level implementation of a field type, the runtime representation of a
@@ -40,4 +43,13 @@ abstract public class FieldType<T> {
      * @note intended for internal usage only!
      */
     public abstract T readSingleField(InStream in);
+
+    /**
+     * Puts one T into the stream.
+     *
+     * @note this function has to be implemented by FieldTypes because of limits of the Java type system (and any other
+     *       sane type system)
+     * @note intended for internal usage only!
+     */
+    public abstract void writeSingleField(T data, OutStream out) throws IOException;
 }

@@ -1,6 +1,9 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
+
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 public final class I8 extends IntegerType<Byte> {
     private final static I8 instance = new I8();
@@ -16,6 +19,11 @@ public final class I8 extends IntegerType<Byte> {
     @Override
     public Byte readSingleField(InStream in) {
         return in.i8();
+    }
+
+    @Override
+    public void writeSingleField(Byte target, OutStream out) throws IOException {
+        out.i8(target);
     }
 
     @Override

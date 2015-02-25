@@ -1,21 +1,23 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
 import de.ust.skill.common.java.api.StringAccess;
 import de.ust.skill.common.jvm.streams.FileInputStream;
+import de.ust.skill.common.jvm.streams.FileOutputStream;
 
 /**
  * @author Timm Felden
- * @note String pools use magic index 0 for faster translation of string ids to
- *       strings.
- * @note String pool may contain duplicates, if strings have been added. This is
- *       a necessary behavior, if add should be an O(1) operation and Strings
- *       are loaded from file lazily.
+ * @note String pools use magic index 0 for faster translation of string ids to strings.
+ * @note String pool may contain duplicates, if strings have been added. This is a necessary behavior, if add should be
+ *       an O(1) operation and Strings are loaded from file lazily.
  */
 public class StringPool implements StringAccess {
     final private FileInputStream input;
@@ -26,8 +28,7 @@ public class StringPool implements StringAccess {
     private final HashSet<String> newStrings = new HashSet<>();
 
     /**
-     * ID ⇀ (absolute offset, length) will be used if idMap contains a null
-     * reference
+     * ID ⇀ (absolute offset, length) will be used if idMap contains a null reference
      *
      * @note there is a fake entry at ID 0
      */
@@ -100,6 +101,49 @@ public class StringPool implements StringAccess {
         return result;
     }
 
+    public void prepareAndWrite(FileOutputStream out, StateWriter ws) throws IOException {
+        HashMap<String, Integer> serializationIDs = ws.stringIDs;
+
+        // ensure all strings are present
+        for (int i = 1; i < stringPositions.size(); i++) {
+            get(i);
+        }
+
+        // create inverse map
+        for (int i = 1; i < idMap.size(); i++) {
+            serializationIDs.put(idMap.get(i), i);
+        }
+
+        // instert new strings to the map;
+        // this is the place where duplications with lazy strings will be detected and eliminated
+        for (String s : newStrings) {
+            if (!serializationIDs.containsKey(s)) {
+                serializationIDs.put(s, idMap.size());
+                idMap.add(s);
+            }
+        }
+
+        // count
+        // @note idMap access performance hack
+        out.v64(idMap.size() - 1);
+
+        // @note idMap access performance hack
+        if (1 != idMap.size()) {
+            // offsets
+            ByteBuffer end = ByteBuffer.allocate(4 * (idMap.size() - 1));
+            int off = 0;
+            for (int i = 1; i < idMap.size(); i++) {
+                off += idMap.get(i).getBytes().length;
+                end.putInt(off);
+            }
+            out.put(end.array());
+
+            // data
+            for (int i = 1; i < idMap.size(); i++)
+                out.put(idMap.get(i).getBytes());
+        }
+    }
+
     @Override
     public boolean isEmpty() {
         return size() == 0;
@@ -169,5 +213,4 @@ public class StringPool implements StringAccess {
         // TODO Auto-generated method stub
 
     }
-
 }

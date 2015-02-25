@@ -4,8 +4,14 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.function.ToIntFunction;
 
+import de.ust.skill.common.java.internal.fieldTypes.ConstantI16;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantI32;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantI64;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantI8;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantLengthArray;
+import de.ust.skill.common.java.internal.fieldTypes.ConstantV64;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
@@ -22,7 +28,7 @@ import de.ust.skill.common.jvm.streams.OutStream;
 abstract public class SerializationFunctions {
 
     protected final SkillState state;
-    protected final HashMap<String, Long> stringIDs = new HashMap<String, Long>();
+    protected final HashMap<String, Integer> stringIDs;
 
     public SerializationFunctions(SkillState state) {
         this.state = state;
@@ -50,20 +56,8 @@ abstract public class SerializationFunctions {
                 }
             }
         }
-    }
 
-    protected final void annotation(SkillObject ref, OutStream out) throws IOException {
-        if (null == ref) {
-            // magic trick!
-            out.i16((short) 0);
-            return;
-        }
-
-        if (ref instanceof NamedType)
-            string(((NamedType) ref).τName(), out);
-        else
-            string(ref.getClass().getSimpleName().toLowerCase(), out);
-        out.v64(ref.getSkillID());
+        stringIDs = state.stringType.resetIDs();
     }
 
     protected final void string(String v, OutStream out) throws IOException {
@@ -71,12 +65,11 @@ abstract public class SerializationFunctions {
     }
 
     /**
-     * ************************************************ UTILITY FUNCTIONS REQUIRED FOR PARALLEL ENCODING
-     * ************************************************
+     * ******************** UTILITY FUNCTIONS REQUIRED FOR PARALLEL ENCODING ********************
      */
 
     @SuppressWarnings("unchecked")
-    protected final <T extends B, B extends SkillObject> long offset(StoragePool<T, B> p, FieldDeclaration<?, T> f) {
+    protected final long offset(StoragePool<?, ?> p, FieldDeclaration<?, ?> f) {
         switch (f.type.typeID) {
         // case ConstantI8(_) | ConstantI16(_) | ConstantI32(_) | ConstantI64(_) | ConstantV64(_) ⇒ 0
         case 0:
@@ -107,15 +100,15 @@ abstract public class SerializationFunctions {
 
             // case V64 ⇒ encodeV64(p, f)
         case 11:
-            return encodeV64(p, (FieldDeclaration<Long, T>) f);
+            return encodeV64(p, (FieldDeclaration<Long, ?>) f);
 
             // case s : Annotation ⇒ p.all.map(_.get(f).asInstanceOf[SkillType]).foldLeft(0L)((r : Long, v : SkillType)
             // ⇒ r + encodeSingleV64(1 + state.poolByName(v.getClass.getName.toLowerCase).poolIndex) +
             // encodeSingleV64(v.getSkillID))
         case 5: {
-            FieldDeclaration<SkillObject, T> field = (FieldDeclaration<SkillObject, T>) f;
+            FieldDeclaration<SkillObject, ?> field = (FieldDeclaration<SkillObject, ?>) f;
             long result = 0L;
-            for (T i : p) {
+            for (SkillObject i : p) {
                 SkillObject ref = i.get(field);
                 result += encodeSingleV64(1 + state.poolByName().get(ref.getClass().getName().toLowerCase()).typeID - 32);
                 result += encodeSingleV64(ref.getSkillID());
@@ -126,9 +119,9 @@ abstract public class SerializationFunctions {
         // case s : StringType ⇒ p.all.map(_.get(f).asInstanceOf[String]).foldLeft(0L)((r : Long, v : String) ⇒ r +
         // encodeSingleV64(stringIDs(v)))
         case 14: {
-            FieldDeclaration<String, T> field = (FieldDeclaration<String, T>) f;
+            FieldDeclaration<String, ?> field = (FieldDeclaration<String, ?>) f;
             long result = 0L;
-            for (T i : p) {
+            for (SkillObject i : p) {
                 String v = i.get(field);
                 result += encodeSingleV64(stringIDs.get(v));
             }
@@ -145,7 +138,8 @@ abstract public class SerializationFunctions {
         case 15: {
             long result = 0L;
             Block b = p.blocks.getLast();
-            Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+            Iterator<? extends SkillObject> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo,
+                    (int) (b.bpo + b.count));
             while (is.hasNext()) {
                 result += encode((Collection<?>) is.next().get(f), ((ConstantLengthArray<?>) f.type).groundType);
             }
@@ -167,10 +161,11 @@ abstract public class SerializationFunctions {
         case 19: {
             long result = 0L;
             Block b = p.blocks.getLast();
-            Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+            Iterator<? extends SkillObject> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo,
+                    (int) (b.bpo + b.count));
             FieldType<?> g = ((SingleArgumentType<?, ?>) f.type).groundType;
             while (is.hasNext()) {
-                Collection<?> xs = (Collection<?>) is.next().get(f);
+                Collection<?> xs = is.next().get((FieldDeclaration<? extends Collection<?>, ?>) f);
                 result += encodeSingleV64(xs.size());
                 result += encode(xs, g);
             }
@@ -189,7 +184,8 @@ abstract public class SerializationFunctions {
         case 20: {
             long result = 0L;
             Block b = p.blocks.getLast();
-            Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+            Iterator<? extends HashMap<?, ?>> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo,
+                    (int) (b.bpo + b.count));
             FieldType<?> kt = ((MapType<?, ?>) f.type).keyType;
             FieldType<?> vt = ((MapType<?, ?>) f.type).valueType;
             while (is.hasNext()) {
@@ -213,7 +209,7 @@ abstract public class SerializationFunctions {
             if (target.basePool.size() < 128)
                 return p.blocks.getLast().count;
 
-            return encodeRefs(p, (FieldDeclaration<? extends SkillObject, T>) f);
+            return encodeRefs(p, (FieldDeclaration<? extends SkillObject, ?>) f);
         }
     }
 
@@ -242,13 +238,12 @@ abstract public class SerializationFunctions {
 
     // TODO create interface VariableLengthDataField and move this method to the field, because generic access is going
     // to kill us
-    private final static <T extends B, B extends SkillObject> long encodeV64(StoragePool<T, B> p,
-            FieldDeclaration<Long, T> f) {
+    private final static long encodeV64(StoragePool<?, ?> p, FieldDeclaration<Long, ?> f) {
         long result = 0L;
         Block b = p.blocks.getLast();
-        Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+        Iterator<? extends SkillObject> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
         while (is.hasNext()) {
-            T i = is.next();
+            SkillObject i = is.next();
             long v = i.get(f);
             if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
                 result += 1;
@@ -299,13 +294,12 @@ abstract public class SerializationFunctions {
         return result;
     }
 
-    private final static <T extends B, B extends SkillObject> long encodeRefs(StoragePool<T, B> p,
-            FieldDeclaration<? extends SkillObject, T> f) {
+    private final static long encodeRefs(StoragePool<?, ?> p, FieldDeclaration<? extends SkillObject, ?> f) {
         long result = 0L;
         Block b = p.blocks.getLast();
-        Iterator<T> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
+        Iterator<? extends SkillObject> is = Iterators.fakeArray(p.basePool.data, (int) b.bpo, (int) (b.bpo + b.count));
         while (is.hasNext()) {
-            T i = is.next();
+            SkillObject i = is.next();
             long v = i.get(f).getSkillID();
             if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
                 result += 1;
@@ -477,157 +471,99 @@ abstract public class SerializationFunctions {
             return encodeRefs((Iterable<? extends SkillObject>) xs);
         }
     }
-    //
-    // // TODO this is not a good solution! (slow and fucked up, but funny)
-    // def typeToSerializationFunction(t : FieldType[_]) : (Any, OutStream) ⇒ Unit = {
-    // implicit def lift[T](f : (T, OutStream) ⇒ Unit) : (Any, OutStream) ⇒ Unit = { case (x, out) ⇒
-    // f(x.asInstanceOf[T], out) }
-    // t match {
-    // case ConstantI8(_) | ConstantI16(_) | ConstantI32(_) | ConstantI64(_) | ConstantV64(_) ⇒ { case (x, out) ⇒ }
-    //
-    // case BoolType ⇒ bool
-    // case I8 ⇒ i8
-    // case I16 ⇒ i16
-    // case I32 ⇒ i32
-    // case I64 ⇒ i64
-    // case V64 ⇒ v64
-    // case F32 ⇒ f32
-    // case F64 ⇒ f64
-    //
-    // case Annotation(_) ⇒ annotation
-    // case StringType(_) ⇒ string
-    //
-    // case ConstantLengthArray(len, sub) ⇒ lift(writeConstArray(typeToSerializationFunction(sub)))
-    // case VariableLengthArray(sub) ⇒ lift(writeVarArray(typeToSerializationFunction(sub)))
-    // case ListType(sub) ⇒ lift(writeList(typeToSerializationFunction(sub)))
-    // case SetType(sub) ⇒ lift(writeSet(typeToSerializationFunction(sub)))
-    //
-    // case MapType(k, v) ⇒ lift(writeMap(typeToSerializationFunction(k), typeToSerializationFunction(v)))
-    //
-    // case s : StoragePool[_, _] ⇒ userRef
-    //
-    // case TypeDefinitionIndex(_) | TypeDefinitionName(_) ⇒
-    // throw new
-    // IllegalStateException("trying to serialize an intermediary type representation can never be successful")
-    // }
-    // }
-    // }
-    //
-    // object SerializationFunctions {
-    //
-    // @inline final def userRef[T <: SkillType](ref : T, out : OutStream) {
-    // if (null == ref) out.i8(0.toByte)
-    // else out.v64(ref.getSkillID)
-    // }
-    //
-    // @inline def bool(v : Boolean, out : OutStream) = out.i8(if (v) -1.toByte else 0.toByte)
-    //
-    // @inline def i8(v : Byte, out : OutStream) = out.i8(v)
-    // @inline def i16(v : Short, out : OutStream) = out.i16(v)
-    // @inline def i32(v : Int, out : OutStream) = out.i32(v)
-    // @inline def i64(v : Long, out : OutStream) = out.i64(v)
-    // @inline def v64(v : Long, out : OutStream) = out.v64(v)
-    //
-    // @inline def f32(v : Float, out : OutStream) = out.f32(v)
-    // @inline def f64(v : Double, out : OutStream) = out.f64(v)
-    //
-    // @inline def writeConstArray[T, S >: T](trans : (S, OutStream) ⇒ Unit)(elements :
-    // scala.collection.mutable.ArrayBuffer[T], out : OutStream) {
-    // for (e ← elements)
-    // trans(e, out)
-    // }
-    // @inline def writeVarArray[T, S >: T](trans : (S, OutStream) ⇒ Unit)(elements :
-    // scala.collection.mutable.ArrayBuffer[T], out : OutStream) {
-    // out.v64(elements.size)
-    // for (e ← elements)
-    // trans(e, out)
-    // }
-    // @inline def writeList[T, S >: T](trans : (S, OutStream) ⇒ Unit)(elements :
-    // scala.collection.mutable.ListBuffer[T], out : OutStream) {
-    // out.v64(elements.size)
-    // for (e ← elements)
-    // trans(e, out)
-    // }
-    // @inline def writeSet[T, S >: T](trans : (S, OutStream) ⇒ Unit)(elements : scala.collection.mutable.HashSet[T],
-    // out : OutStream) {
-    // out.v64(elements.size)
-    // for (e ← elements)
-    // trans(e, out)
-    // }
-    // def writeMap[T, U](keys : (T, OutStream) ⇒ Unit, vals : (U, OutStream) ⇒ Unit)(elements :
-    // scala.collection.mutable.HashMap[T, U], out : OutStream) {
-    // out.v64(elements.size)
-    // for ((k, v) ← elements) {
-    // keys(k, out)
-    // vals(v, out)
-    // }
-    // }
-    //
-    // /**
-    // * TODO serialization of restrictions
-    // */
-    // def restrictions(p : StoragePool[_, _], out : OutStream) = out.i8(0.toByte)
-    // /**
-    // * TODO serialization of restrictions
-    // */
-    // def restrictions(f : FieldDeclaration[_], out : OutStream) = out.i8(0.toByte)
-    // /**
-    // * serialization of types is fortunately independent of state, because field types know their ID
-    // */
-    // def writeType(t : FieldType[_], out : OutStream) : Unit = t match {
-    // case ConstantI8(v) ⇒
-    // v64(t.typeID, out)
-    // i8(v, out)
-    // case ConstantI16(v) ⇒
-    // v64(t.typeID, out)
-    // i16(v, out)
-    // case ConstantI32(v) ⇒
-    // v64(t.typeID, out)
-    // i32(v, out)
-    // case ConstantI64(v) ⇒
-    // v64(t.typeID, out)
-    // i64(v, out)
-    // case ConstantV64(v) ⇒
-    // v64(t.typeID, out)
-    // v64(v, out)
-    //
-    // case ConstantLengthArray(l, t) ⇒
-    // out.i8(0x0F.toByte)
-    // v64(l, out)
-    // v64(t.typeID, out)
-    //
-    // case VariableLengthArray(t) ⇒
-    // out.i8(0x11.toByte)
-    // v64(t.typeID, out)
-    // case ListType(t) ⇒
-    // out.i8(0x12.toByte)
-    // v64(t.typeID, out)
-    // case SetType(t) ⇒
-    // out.i8(0x13.toByte)
-    // v64(t.typeID, out)
-    //
-    // case MapType(k, v) ⇒
-    // out.i8(0x14.toByte)
-    // writeType(k, out)
-    // writeType(v, out)
-    //
-    // case _ ⇒
-    // v64(t.typeID, out)
-    // }
-    //
-    // /**
-    // * creates an lbpo map by recursively adding the local base pool offset to the map and adding all sub pools
-    // * afterwards
-    // */
-    // final def makeLBPOMap[T <: B, B <: SkillType](pool : StoragePool[T, B], lbpsiMap : Array[Long], next : Long, size
-    // : StoragePool[_, _] ⇒ Long) : Long = {
-    // lbpsiMap(pool.poolIndex.toInt) = next
-    // var result = next + size(pool)
-    // for (sub ← pool.subPools) {
-    // result = makeLBPOMap(sub, lbpsiMap, result, size)
-    // }
-    // result
-    // }
+
+    /**
+     * TODO serialization of restrictions
+     */
+    protected static final void restrictions(StoragePool<?, ?> p, OutStream out) throws IOException {
+        out.i8((byte) 0);
+    }
+
+    /**
+     * TODO serialization of restrictions
+     */
+    protected static final void restrictions(FieldDeclaration<?, ?> f, OutStream out) throws IOException {
+        out.i8((byte) 0);
+    }
+
+    /**
+     * serialization of types is fortunately independent of state, because field types know their ID
+     */
+    protected static final void writeType(FieldType<?> t, OutStream out) throws IOException {
+        switch (t.typeID) {
+        // case ConstantI8(v) ⇒
+        case 0:
+            out.i8((byte) 0);
+            out.i8(((ConstantI8) t).value);
+            return;
+
+            // case ConstantI16(v) ⇒
+        case 1:
+            out.i8((byte) 1);
+            out.i16(((ConstantI16) t).value);
+            return;
+
+            // case ConstantI32(v) ⇒
+        case 2:
+            out.i8((byte) 2);
+            out.i32(((ConstantI32) t).value);
+            return;
+
+            // case ConstantI64(v) ⇒
+        case 3:
+            out.i8((byte) 3);
+            out.i64(((ConstantI64) t).value);
+            return;
+
+            // case ConstantV64(v) ⇒
+        case 4:
+            out.i8((byte) 4);
+            out.v64(((ConstantV64) t).value);
+            return;
+
+            // case ConstantLengthArray(l, t) ⇒
+        case 15:
+            out.i8((byte) 0x0F);
+            out.v64(((ConstantLengthArray<?>) t).length);
+            out.v64(((SingleArgumentType<?, ?>) t).groundType.typeID);
+            return;
+
+            // case VariableLengthArray(t) ⇒
+            // case ListType(t) ⇒
+            // case SetType(t) ⇒
+        case 17:
+        case 18:
+        case 19:
+            out.i8((byte) t.typeID);
+            out.v64(((SingleArgumentType<?, ?>) t).groundType.typeID);
+            return;
+
+            // case MapType(k, v) ⇒
+        case 20:
+            out.i8((byte) 0x14);
+            writeType(((MapType<?, ?>) t).keyType, out);
+            writeType(((MapType<?, ?>) t).valueType, out);
+            return;
+
+        default:
+            out.v64(t.typeID);
+            return;
+        }
+    }
+
+    /**
+     * creates an lbpo map by recursively adding the local base pool offset to the map and adding all sub pools
+     * afterwards TODO remove size function, because there are only two cases!
+     */
+    protected final static int makeLBPOMap(StoragePool<?, ?> p, int[] lbpoMap, int next,
+            ToIntFunction<StoragePool<?, ?>> size) {
+        lbpoMap[p.typeID - 32] = next;
+        int result = next + size.applyAsInt(p);
+        for (SubPool<?, ?> sub : p.subPools) {
+            result = makeLBPOMap(sub, lbpoMap, result, size);
+        }
+        return result;
+    }
     //
     // /**
     // * concatenates array buffers in the d-map. This will in fact turn the d-map from a map pointing from names to

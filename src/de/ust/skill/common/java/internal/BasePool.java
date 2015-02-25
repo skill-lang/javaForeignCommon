@@ -7,8 +7,7 @@ import java.util.Set;
 import de.ust.skill.common.java.iterators.Iterators;
 
 /**
- * The base of a type hierarchy. Contains optimized representations of data
- * compared to sub pools.
+ * The base of a type hierarchy. Contains optimized representations of data compared to sub pools.
  * 
  * @author Timm Felden
  * @param <T>
@@ -22,8 +21,8 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      * @note has to be overridden by each concrete base pool
      */
     @SuppressWarnings({ "static-method", "unchecked" })
-    protected T[] emptyArray() {
-        return (T[]) new SkillObject[0];
+    protected T[] newArray(int size) {
+        return (T[]) new SkillObject[size];
     }
 
     /**
@@ -31,7 +30,7 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      * 
      * @note manual type erasure required for consistency
      */
-    protected T[] data = emptyArray();
+    protected T[] data = newArray(0);
 
     /**
      * the owner is set once by the SkillState.finish method!
@@ -99,6 +98,22 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      */
     public Iterator<T> dataViewIterator(int begin, int end) {
         return Iterators.<T> array(data, begin, end);
+    }
+
+    /**
+     * compress new instances into the data array and update skillIDs
+     */
+    final void compress(int[] lbpoMap) {
+        T[] d = newArray(size());
+        int p = 0;
+        Iterator<T> is = typeOrderIterator();
+        while (is.hasNext()) {
+            final T i = is.next();
+            d[p++] = i;
+            i.setSkillID(p);
+        }
+        data = d;
+        updateAfterCompress(lbpoMap);
     }
 
 }

@@ -1,7 +1,10 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
+
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 public final class BoolType extends FieldType<Boolean> {
     private static final BoolType instance = new BoolType();
@@ -14,10 +17,14 @@ public final class BoolType extends FieldType<Boolean> {
         super(6);
     }
 
-
     @Override
     public Boolean readSingleField(InStream in) {
         return in.bool();
+    }
+
+    @Override
+    public void writeSingleField(Boolean data, OutStream out) throws IOException {
+        out.bool(data);
     }
 
     @Override

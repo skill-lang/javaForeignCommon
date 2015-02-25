@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,6 +17,7 @@ import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.iterators.Iterators;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 /**
  * Top level implementation of all storage pools.
@@ -170,6 +172,11 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         return getByID(in.v64());
     }
 
+    @Override
+    public final void writeSingleField(T ref, OutStream out) throws IOException {
+        out.v64(null == ref ? 0 : ref.getSkillID());
+    }
+
     /**
      * @return size including subtypes
      */
@@ -254,9 +261,13 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public Iterator<T> typeOrderIterator() {
-        // TODO Auto-generated method stub
-        return null;
+    final public Iterator<T> typeOrderIterator() {
+        ArrayList<Iterator<? extends T>> is = new ArrayList<>(subPools.size()+1);
+        is.add(staticInstances());
+        for(SubPool<?extends T, B> s : subPools)
+            is.add(s.staticInstances());
+
+        return Iterators.concatenate(is);
     }
 
     @Override
@@ -270,6 +281,15 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      * @note implementation relies on an ascending order of insertion
      */
     abstract boolean insertInstance(int skillID);
+
+    protected final void updateAfterCompress(int[] lbpoMap) {
+        blocks.clear();
+        blocks.add(new Block(lbpoMap[typeID - 32], size()));
+        newObjects.clear();
+        newObjects.trimToSize();
+        for (SubPool<?, ?> p : subPools)
+            p.updateAfterCompress(lbpoMap);
+    }
 
     /**
      * internal use only!

@@ -1,9 +1,12 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
+import de.ust.skill.common.jvm.streams.OutStream;
 
 public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
     public final FieldType<K> keyType;
@@ -21,6 +24,15 @@ public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
         for (int i = (int) in.v64(); i != 0; i--)
             rval.put(keyType.readSingleField(in), valueType.readSingleField(in));
         return rval;
+    }
+
+    @Override
+    public void writeSingleField(HashMap<K, V> data, OutStream out) throws IOException {
+        out.v64(data.size());
+        for (Entry<K, V> e : data.entrySet()) {
+            keyType.writeSingleField(e.getKey(), out);
+            valueType.writeSingleField(e.getValue(), out);
+        }
     }
 
     @Override
