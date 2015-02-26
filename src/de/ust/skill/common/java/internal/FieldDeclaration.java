@@ -170,7 +170,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      *       parallel
      * @note only called, if there actually is field data to be written
      */
-    public abstract void write(MappedOutStream out);
+    public abstract void write(MappedOutStream out) throws SkillException, IOException;
 
     /**
      * Coordinates reads and prevents from state corruption using the barrier.

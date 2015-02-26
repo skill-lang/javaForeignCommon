@@ -1,11 +1,16 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
+import de.ust.skill.common.java.api.SkillException;
+import de.ust.skill.common.java.internal.FieldDeclaration.ChunkEntry;
+import de.ust.skill.common.java.internal.parts.BulkChunk;
 import de.ust.skill.common.jvm.streams.FileOutputStream;
 import de.ust.skill.common.jvm.streams.MappedOutStream;
 
@@ -90,12 +95,18 @@ final public class StateWriter extends SerializationFunctions {
             for (FieldDeclaration<?, ?> f : fields) {
                 StoragePool<?, ?> p = f.owner;
                 HashMap<FieldDeclaration<?, ?>, Future<Long>> vs = offsets.get(p);
+
+                // write info
                 out.v64(f.index);
                 string(f.name, out);
                 writeType(f.type, out);
                 restrictions(f, out);
                 long end = offset + vs.get(f).get();
                 out.v64(end);
+
+                // update chunks and prepare write data
+                f.dataChunks.clear();
+                f.dataChunks.add(new ChunkEntry(new BulkChunk(offset, end, p.size())));
                 data.add(new Task<>(f, offset, end));
                 offset = end;
             }
@@ -103,6 +114,9 @@ final public class StateWriter extends SerializationFunctions {
 
         // write field data
         Semaphore barrier = new Semaphore(0);
+        // async reads will post their errors in this queue
+        final ConcurrentLinkedQueue<SkillException> writeErrors = new ConcurrentLinkedQueue<SkillException>();
+
         long baseOffset = out.position();
         for (Task<?> t : data) {
             final FieldDeclaration<?, ?> f = t.f;
@@ -114,6 +128,12 @@ final public class StateWriter extends SerializationFunctions {
                 public void run() {
                     try {
                         f.write(outMap);
+                    } catch (SkillException e) {
+                        writeErrors.add(e);
+                    } catch (IOException e) {
+                        writeErrors.add(new SkillException("failed to write field " + f.toString(), e));
+                    } catch (Throwable e) {
+                        writeErrors.add(new SkillException("unexpected failure while writing field " + f.toString(), e));
                     } finally {
                         // ensure that writer can terminate, errors will be printed to command line anyway, and we wont
                         // be able to recover, because errors can only happen if the skill implementation itself is
@@ -125,6 +145,13 @@ final public class StateWriter extends SerializationFunctions {
         }
         barrier.acquire(data.size());
         out.close();
+
+        // report errors
+        for (SkillException e : writeErrors) {
+            e.printStackTrace();
+        }
+        if (!writeErrors.isEmpty())
+            throw writeErrors.peek();
 
         /**
          * **************** PHASE 4: CLEANING * ****************

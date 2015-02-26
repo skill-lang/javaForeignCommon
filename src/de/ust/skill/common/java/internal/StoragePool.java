@@ -210,7 +210,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     @Override
     public boolean add(T e) {
-        throw new Error("TODO");
+        return newObjects.add(e);
     }
 
     @Override
@@ -262,9 +262,9 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     @Override
     final public Iterator<T> typeOrderIterator() {
-        ArrayList<Iterator<? extends T>> is = new ArrayList<>(subPools.size()+1);
+        ArrayList<Iterator<? extends T>> is = new ArrayList<>(subPools.size() + 1);
         is.add(staticInstances());
-        for(SubPool<?extends T, B> s : subPools)
+        for (SubPool<? extends T, B> s : subPools)
             is.add(s.staticInstances());
 
         return Iterators.concatenate(is);
@@ -285,6 +285,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     protected final void updateAfterCompress(int[] lbpoMap) {
         blocks.clear();
         blocks.add(new Block(lbpoMap[typeID - 32], size()));
+        staticData.addAll(newObjects);
         newObjects.clear();
         newObjects.trimToSize();
         for (SubPool<?, ?> p : subPools)
