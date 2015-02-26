@@ -1,11 +1,13 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
 import java.io.IOException;
+import java.util.Collection;
 
+import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
-public final class F64 extends IntegerType<Double> {
+public final class F64 extends FloatType<Double> {
     private final static F64 instance = new F64();
 
     public static F64 get() {
@@ -19,6 +21,11 @@ public final class F64 extends IntegerType<Double> {
     @Override
     public Double readSingleField(InStream in) {
         return in.f64();
+    }
+
+    @Override
+    public long calculateOffset(Collection<Double> xs, Block range) {
+        return 8 * range.count;
     }
 
     @Override

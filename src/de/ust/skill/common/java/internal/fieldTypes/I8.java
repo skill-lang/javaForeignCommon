@@ -1,7 +1,9 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
 import java.io.IOException;
+import java.util.Collection;
 
+import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
@@ -19,6 +21,11 @@ public final class I8 extends IntegerType<Byte> {
     @Override
     public Byte readSingleField(InStream in) {
         return in.i8();
+    }
+
+    @Override
+    public long calculateOffset(Collection<Byte> xs, Block range) {
+        return range.count;
     }
 
     @Override

@@ -3,6 +3,7 @@ package de.ust.skill.common.java.internal;
 import de.ust.skill.common.java.internal.fieldDeclarations.AutoField;
 import de.ust.skill.common.java.internal.fieldDeclarations.KnownLongField;
 import de.ust.skill.common.java.internal.fieldTypes.V64;
+import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.jvm.streams.MappedInStream;
 import de.ust.skill.common.jvm.streams.MappedOutStream;
@@ -42,6 +43,11 @@ public class KnownField_SkillID<T extends SkillObject> extends FieldDeclaration<
     @Override
     protected void read(MappedInStream in, Chunk last) {
         throw new NoSuchMethodError("one can not read auto fields!");
+    }
+
+    @Override
+    public long offset(Block range) {
+        return 0;
     }
 
     @Override

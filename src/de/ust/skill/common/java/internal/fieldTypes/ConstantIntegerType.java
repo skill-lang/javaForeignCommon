@@ -1,8 +1,10 @@
 package de.ust.skill.common.java.internal.fieldTypes;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import de.ust.skill.common.java.internal.FieldType;
+import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
@@ -25,6 +27,12 @@ public abstract class ConstantIntegerType<T> extends FieldType<T> {
     @Override
     public final T readSingleField(InStream in) {
         return value();
+    }
+
+    @Override
+    final public long calculateOffset(Collection<T> xs, Block range) {
+        // nothing to do
+        return 0;
     }
 
     @Override

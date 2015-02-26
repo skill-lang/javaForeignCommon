@@ -10,6 +10,7 @@ import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.internal.SkillState.ReadBarrier;
 import de.ust.skill.common.java.internal.fieldDeclarations.IgnoredField;
+import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
@@ -162,6 +163,11 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      * construction and done massively in parallel.
      */
     protected abstract void read(MappedInStream in, Chunk last);
+
+    /**
+     * offset calculation as preparation of writing data belonging to the argument range
+     */
+    public abstract long offset(Block range);
 
     /**
      * write data into a map at the end of a write/append operation

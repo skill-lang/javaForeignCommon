@@ -53,6 +53,18 @@ public class DistributedField<T, Obj extends SkillObject> extends FieldDeclarati
             throw new PoolSizeMissmatchError(dataChunks.size() - 1, last.begin, last.end, this);
 
     }
+    
+    // TODO distributed fields need to be compressed as well!
+
+    @Override
+    public long offset(Block range) {
+        // @note order is not important, because we calculate offsets only!!!
+        return type.calculateOffset(data.values(), range);
+        // alle generischen felder SIND collections;
+        // interne struktur übergeben & block und dann auf typen skip über den begin und bei count aufhören
+        //
+        // return -1;
+    }
 
     @Override
     public void write(MappedOutStream out) {

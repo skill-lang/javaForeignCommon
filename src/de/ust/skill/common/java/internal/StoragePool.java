@@ -173,8 +173,45 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
+    public final long calculateOffset(Collection<T> xs, Block range) {
+        // shortcut small compressed types
+        if (basePool.data.length < 128)
+            return range.count;
+
+        Iterator<T> is = xs.iterator();
+        // skip begin
+        for (int i = (int) range.bpo; i != 0; i--)
+            is.next();
+
+        long result = 0L;
+        for (int i = (int) range.count; i != 0; i--) {
+            long v = is.next().skillID;
+            if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
+                result += 1;
+            } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
+                result += 2;
+            } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
+                result += 3;
+            } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
+                result += 4;
+            } else if (0L == (v & 0xFFFFFFF800000000L)) {
+                result += 5;
+            } else if (0L == (v & 0xFFFFFC0000000000L)) {
+                result += 6;
+            } else if (0L == (v & 0xFFFE000000000000L)) {
+                result += 7;
+            } else if (0L == (v & 0xFF00000000000000L)) {
+                result += 8;
+            } else {
+                result += 9;
+            }
+        }
+        return result;
+    }
+
+    @Override
     public final void writeSingleField(T ref, OutStream out) throws IOException {
-        out.v64(null == ref ? 0 : ref.getSkillID());
+        out.v64(null == ref ? 0 : ref.skillID);
     }
 
     /**

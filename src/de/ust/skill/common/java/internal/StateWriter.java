@@ -60,7 +60,7 @@ final public class StateWriter extends SerializationFunctions {
                     vs.put(f, SkillState.pool.submit(new Callable<Long>() {
                         @Override
                         public Long call() throws Exception {
-                            return offset(p, f);
+                            return f.offset(p.blocks.getLast());
                         }
                     }));
                 }

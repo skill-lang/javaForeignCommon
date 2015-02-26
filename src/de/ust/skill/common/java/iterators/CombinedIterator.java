@@ -3,19 +3,19 @@ package de.ust.skill.common.java.iterators;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
 /**
- * Combines a list of iterators into a single iterator, that will iterate over
- * all iterators in order
+ * Combines a list of iterators into a single iterator, that will iterate over all iterators in order
  * 
  * @author Timm Felden
  */
 public final class CombinedIterator<T> implements Iterator<T> {
     /**
-     * iterator list is linked to allow for gc of unused iterators. All
-     * iterators in the list are non-empty
+     * iterator list is linked to allow for gc of unused iterators. All iterators in the list are non-empty
      */
-    private LinkedList<Iterator<? extends T>> is;
+    private LinkedList<Iterator<? extends T>> iterators;
+    private Iterator<? extends T> current;
 
     /**
      * Constructs a combined iterator, ignoring all empty iterators in the list
@@ -25,10 +25,14 @@ public final class CombinedIterator<T> implements Iterator<T> {
      */
     @SafeVarargs
     CombinedIterator(Iterator<? extends T>... is) {
-        this.is = new LinkedList<>();
+        this.iterators = new LinkedList<>();
         for (Iterator<? extends T> i : is)
             if (i.hasNext())
-                this.is.addLast(i);
+                this.iterators.addLast(i);
+        if (iterators.isEmpty())
+            current = null;
+        else
+            current = iterators.removeFirst();
     }
 
     /**
@@ -38,23 +42,34 @@ public final class CombinedIterator<T> implements Iterator<T> {
      *            a list of iterators
      */
     CombinedIterator(Collection<Iterator<? extends T>> is) {
-        this.is = new LinkedList<>();
+        this.iterators = new LinkedList<>();
         for (Iterator<? extends T> i : is)
             if (i.hasNext())
-                this.is.addLast(i);
+                this.iterators.addLast(i);
+        if (iterators.isEmpty())
+            current = null;
+        else
+            current = iterators.removeFirst();
     }
 
     @Override
     public boolean hasNext() {
-        return !is.isEmpty();
+        return null != current;
     }
 
     @Override
     public T next() {
-        T next = is.getFirst().next();
-        if (!is.isEmpty() && !is.getFirst().hasNext())
-            is.removeFirst();
+        if (null == current)
+            throw new NoSuchElementException("empty iterator");
+
+        T next = current.next();
+        if (!current.hasNext())
+            if (iterators.isEmpty())
+                current = null;
+            else
+                current = iterators.removeFirst();
 
         return next;
+
     }
 }
