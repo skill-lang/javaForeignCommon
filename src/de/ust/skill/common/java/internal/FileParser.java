@@ -56,8 +56,8 @@ public abstract class FileParser<State extends SkillState> {
     // types
     protected final ArrayList<StoragePool<?, ?>> types = new ArrayList<>();
     protected final HashMap<String, StoragePool<?, ?>> poolByName = new HashMap<>();
-    final Annotation Annotation;
-    final StringType StringType;
+    protected final Annotation Annotation;
+    protected final StringType StringType;
 
     /**
      * creates a new storage pool of matching name
