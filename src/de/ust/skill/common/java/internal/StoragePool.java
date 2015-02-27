@@ -103,6 +103,13 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     final ArrayList<T> newObjects = new ArrayList<>();
 
+    /**
+     * Ensures that at least capacity many new objects can be stored in this pool without moving references.
+     */
+    public void hintNewObjectsSize(int capacity) {
+        newObjects.ensureCapacity(capacity);
+    }
+
     protected final Iterator<T> newDynamicInstances() {
         LinkedList<Iterator<? extends T>> is = new LinkedList<>();
         if (!newObjects.isEmpty())
@@ -132,6 +139,45 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      * the number of static instances loaded from the file
      */
     final protected ArrayList<T> staticData = new ArrayList<>();
+
+    /**
+     * storage pools can be fixed, i.e. no dynamic instances can be added to the pool. Fixing a pool requires that it
+     * does not contain a new object. Fixing a pool will fix subpools as well. Un-fixing a pool will un-fix super pools
+     * as well, thus being fixed is a transitive property over the sub pool relation. Pools will be fixed by flush
+     * operations.
+     */
+    boolean fixed = false;
+    /**
+     * size that is only valid in fixed state
+     */
+    int cachedSize;
+
+    public final boolean fixed() {
+        return fixed;
+    }
+
+    /**
+     * set new fixation status; if setting fails, some sub pools may have been fixed nonetheless.
+     */
+    public final void fixed(boolean newStatus) {
+        if (fixed == newStatus)
+            return;
+
+        if (newStatus) {
+            if (0 != newObjects.size())
+                throw new IllegalStateException("can not fix a pool that contains new objects");
+
+            for (SubPool<?, B> s : subPools)
+                s.fixed(true);
+
+            cachedSize = size();
+
+        } else {
+            if (null != superPool)
+                superPool.fixed(false);
+        }
+        fixed = newStatus;
+    }
 
     @Override
     final public String name() {
@@ -219,6 +265,9 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     @Override
     final public int size() {
+        if (fixed)
+            return cachedSize;
+
         int size = staticSize();
         for (SubPool<?, ?> s : subPools)
             size += s.size();
@@ -246,7 +295,10 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public boolean add(T e) {
+    public final boolean add(T e) {
+        if (fixed)
+            throw new IllegalStateException("can not fix a pool that contains new objects");
+
         return newObjects.add(e);
     }
 
