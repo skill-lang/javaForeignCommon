@@ -25,4 +25,8 @@ public final class Block {
         this.count = count;
     }
 
+	public boolean contains(long skillID) {
+		return bpo <= skillID  && skillID < bpo + count;
+	}
+
 }

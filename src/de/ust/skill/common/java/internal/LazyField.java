@@ -66,6 +66,14 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
     public void read(MappedInStream in, Chunk last) {
         // deferred
     }
+    
+    @Override
+    public long offset(Block range) {
+    	if(!isLoaded)
+    		load();
+    	
+    	return super.offset(range);
+    }
 
     @Override
     public T getR(Obj ref) {

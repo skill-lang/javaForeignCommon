@@ -3,7 +3,6 @@ package de.ust.skill.common.java.internal.fieldTypes;
 import java.io.IOException;
 import java.util.Collection;
 
-import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
@@ -24,8 +23,8 @@ public final class I32 extends IntegerType<Integer> {
     }
 
     @Override
-    public long calculateOffset(Collection<Integer> xs, Block range) {
-        return 4 * range.count;
+    public long calculateOffset(Collection<Integer> xs) {
+        return 4 * xs.size();
     }
 
     @Override

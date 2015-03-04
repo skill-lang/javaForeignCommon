@@ -173,19 +173,14 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public final long calculateOffset(Collection<T> xs, Block range) {
+    public final long calculateOffset(Collection<T> xs) {
         // shortcut small compressed types
         if (basePool.data.length < 128)
-            return range.count;
-
-        Iterator<T> is = xs.iterator();
-        // skip begin
-        for (int i = (int) range.bpo; i != 0; i--)
-            is.next();
+            return xs.size();
 
         long result = 0L;
-        for (int i = (int) range.count; i != 0; i--) {
-            long v = is.next().skillID;
+        for (T x : xs) {
+            long v = x.skillID;
             if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
                 result += 1;
             } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {

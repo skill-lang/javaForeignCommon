@@ -3,7 +3,6 @@ package de.ust.skill.common.java.internal.fieldTypes;
 import java.io.IOException;
 import java.util.Collection;
 
-import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
@@ -24,8 +23,8 @@ public final class F64 extends FloatType<Double> {
     }
 
     @Override
-    public long calculateOffset(Collection<Double> xs, Block range) {
-        return 8 * range.count;
+    public long calculateOffset(Collection<Double> xs) {
+        return 8 * xs.size();
     }
 
     @Override

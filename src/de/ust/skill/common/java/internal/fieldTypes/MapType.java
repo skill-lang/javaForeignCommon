@@ -3,11 +3,9 @@ package de.ust.skill.common.java.internal.fieldTypes;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map.Entry;
 
 import de.ust.skill.common.java.internal.FieldType;
-import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
@@ -30,20 +28,12 @@ public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
     }
 
     @Override
-    public long calculateOffset(Collection<HashMap<K, V>> xs, Block range) {
-        Iterator<HashMap<K, V>> is = xs.iterator();
-
-        // skip begin
-        if (null != range)
-            for (int i = (int) range.bpo; i != 0; i--)
-                is.next();
-
+    public long calculateOffset(Collection<HashMap<K, V>> xs) {
         long result = 0L;
-        for (int i = null == range ? xs.size() : (int) range.count; i != 0; i--) {
-            HashMap<K, V> x = is.next();
+        for (HashMap<K, V> x : xs) {
             result += V64.singleV64Offset(x.size());
-            result += keyType.calculateOffset(x.keySet(), null);
-            result += valueType.calculateOffset(x.values(), null);
+            result += keyType.calculateOffset(x.keySet());
+            result += valueType.calculateOffset(x.values());
         }
 
         return result;

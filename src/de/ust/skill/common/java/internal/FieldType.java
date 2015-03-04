@@ -3,7 +3,6 @@ package de.ust.skill.common.java.internal;
 import java.io.IOException;
 import java.util.Collection;
 
-import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
@@ -47,9 +46,9 @@ abstract public class FieldType<T> {
     public abstract T readSingleField(InStream in);
 
     /**
-     * Calculate the amount of disk space required to store a the range of xs.
+     * Calculate the amount of disk space required to store all xs.
      */
-    public abstract long calculateOffset(Collection<T> xs, Block range);
+    public abstract long calculateOffset(Collection<T> xs);
 
     /**
      * Puts one T into the stream.
