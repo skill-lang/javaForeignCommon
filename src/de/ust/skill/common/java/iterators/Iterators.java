@@ -2,6 +2,7 @@ package de.ust.skill.common.java.iterators;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * Advanced iterator handling.
@@ -57,16 +58,41 @@ public final class Iterators {
         return EmptyIterator.<T> get();
     }
 
+    @SuppressWarnings("unchecked")
     @SafeVarargs
     public static <T> Iterator<T> concatenate(Iterator<? extends T>... is) {
         if (0 == is.length)
             return EmptyIterator.<T> get();
-        return new CombinedIterator<T>(is);
+
+        // filter empty iterators
+        LinkedList<Iterator<? extends T>> iterators = new LinkedList<>();
+        for (Iterator<? extends T> i : is)
+            if (i.hasNext())
+                iterators.addLast(i);
+        if (iterators.isEmpty())
+            return EmptyIterator.<T> get();
+        else if (iterators.size() == 1)
+            return (Iterator<T>) iterators.getFirst();
+
+        return new CombinedIterator<T>(iterators);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Iterator<T> concatenate(Collection<Iterator<? extends T>> is) {
-        if (is.isEmpty())
+        final int length = is.size();
+        if (0 == length)
             return EmptyIterator.<T> get();
-        return new CombinedIterator<T>(is);
+
+        // filter empty iterators
+        LinkedList<Iterator<? extends T>> iterators = new LinkedList<>();
+        for (Iterator<? extends T> i : is)
+            if (i.hasNext())
+                iterators.addLast(i);
+        if (iterators.isEmpty())
+            return EmptyIterator.<T> get();
+        else if (iterators.size() == 1)
+            return (Iterator<T>) iterators.getFirst();
+
+        return new CombinedIterator<T>(iterators);
     }
 }

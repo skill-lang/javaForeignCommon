@@ -1,6 +1,5 @@
 package de.ust.skill.common.java.iterators;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
@@ -14,42 +13,18 @@ public final class CombinedIterator<T> implements Iterator<T> {
     /**
      * iterator list is linked to allow for gc of unused iterators. All iterators in the list are non-empty
      */
-    private LinkedList<Iterator<? extends T>> iterators;
+    private final LinkedList<Iterator<? extends T>> iterators;
     private Iterator<? extends T> current;
 
     /**
      * Constructs a combined iterator, ignoring all empty iterators in the list
      * 
      * @param is
-     *            a list of iterators
+     *            a non-empty list of iterators
      */
-    @SafeVarargs
-    CombinedIterator(Iterator<? extends T>... is) {
-        this.iterators = new LinkedList<>();
-        for (Iterator<? extends T> i : is)
-            if (i.hasNext())
-                this.iterators.addLast(i);
-        if (iterators.isEmpty())
-            current = null;
-        else
-            current = iterators.removeFirst();
-    }
-
-    /**
-     * Constructs a combined iterator, ignoring all empty iterators in the list
-     * 
-     * @param is
-     *            a list of iterators
-     */
-    CombinedIterator(Collection<Iterator<? extends T>> is) {
-        this.iterators = new LinkedList<>();
-        for (Iterator<? extends T> i : is)
-            if (i.hasNext())
-                this.iterators.addLast(i);
-        if (iterators.isEmpty())
-            current = null;
-        else
-            current = iterators.removeFirst();
+    CombinedIterator(LinkedList<Iterator<? extends T>> iterators) {
+        this.iterators = iterators;
+        current = iterators.removeFirst();
     }
 
     @Override

@@ -39,6 +39,7 @@ final public class StateWriter extends SerializationFunctions {
             if (p instanceof BasePool<?>) {
                 makeLBPOMap(p, lbpoMap, 0);
                 ((BasePool<?>) p).compress(lbpoMap);
+                p.fixed(true);
             }
         });
 
@@ -158,6 +159,10 @@ final public class StateWriter extends SerializationFunctions {
          */
         // release data structures
         state.stringType.clearIDs();
+        // unfix pools
+        for (StoragePool<?, ?> p : state.types) {
+            p.fixed(false);
+        }
     }
 
     /**
