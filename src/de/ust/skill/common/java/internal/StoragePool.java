@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -14,6 +15,9 @@ import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.ReferenceType;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
 import de.ust.skill.common.java.internal.parts.Block;
+import de.ust.skill.common.java.internal.parts.BulkChunk;
+import de.ust.skill.common.java.internal.parts.Chunk;
+import de.ust.skill.common.java.internal.parts.SimpleChunk;
 import de.ust.skill.common.java.iterators.Iterators;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.jvm.streams.InStream;
@@ -120,6 +124,14 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
                 is.add(subIter);
         }
         return Iterators.<T> concatenate(is);
+    }
+
+    protected final int newDynamicInstancesSize() {
+        int rval = newObjects.size();
+        for (SubPool<? extends T, B> sub : subPools) {
+            rval += sub.newDynamicInstancesSize();
+        }
+        return rval;
     }
 
     /**
@@ -402,5 +414,63 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     public <S extends T> StoragePool<S, B> makeSubPool(int index, String name) {
         return new SubPool<S, B>(index, name, this, Collections.emptySet(), noAutoFields());
+    }
+
+    /**
+     * called after a prepare append operation to write empty the new objects buffer and to set blocks correctly
+     */
+    protected final void updateAfterPrepareAppend(HashMap<FieldDeclaration<?, ?>, Chunk> chunkMap) {
+        final boolean newInstances = newDynamicInstances().hasNext();
+        final boolean newPool = blocks.isEmpty();
+        final boolean newField;
+        {
+            boolean exists = false;
+            for (FieldDeclaration<?, T> f : fields) {
+                if (f.noDataChunk()) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            newField = exists;
+        }
+
+        if (newPool || newInstances || newField) {
+
+            // build block chunk
+            final int lcount = newDynamicInstancesSize();
+            // //@ note this is the index into the data array and NOT the written lbpo
+            final int lbpo = (0 == lcount) ? 0 : ((int) newDynamicInstances().next().skillID - 1);
+
+            blocks.addLast(new Block(lbpo, lcount));
+
+            // @note: if this does not hold for p; then it will not hold for p.subPools either!
+            if (newInstances || !newPool) {
+                // build field chunks
+                for (FieldDeclaration<?, T> f : fields) {
+                    if (0 == f.index)
+                        continue;
+
+                    final Chunk c;
+                    if (f.noDataChunk()) {
+                        c = new BulkChunk(-1, -1, size());
+                    } else if (newInstances) {
+                        c = new SimpleChunk(-1, -1, lbpo, lcount);
+                    } else
+                        continue;
+
+                    f.addChunk(c);
+                    chunkMap.put(f, c);
+                }
+            }
+        }
+        // notify sub pools
+        for (SubPool<?, B> p : subPools)
+            p.updateAfterPrepareAppend(chunkMap);
+
+        // remove new objects, because they are regular objects by now
+        staticData.addAll(newObjects);
+        newObjects.clear();
+        newObjects.trimToSize();
     }
 }

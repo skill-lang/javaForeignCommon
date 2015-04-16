@@ -1,9 +1,11 @@
 package de.ust.skill.common.java.internal;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.iterators.Iterators;
 
 /**
@@ -114,6 +116,38 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
         }
         data = d;
         updateAfterCompress(lbpoMap);
+    }
+
+    final void prepareAppend(HashMap<FieldDeclaration<?, ?>, Chunk> chunkMap) {
+        boolean newInstances = newDynamicInstances().hasNext();
+
+        // check if we have to append at all
+        if (!newInstances && !blocks.isEmpty() && !fields.isEmpty()) {
+            boolean done = true;
+            for (FieldDeclaration<?, T> f : fields) {
+                if (f.noDataChunk()) {
+                    done = false;
+                    break;
+                }
+            }
+            if (done)
+                return;
+        }
+
+        if (newInstances) {
+            // we have to resize
+            final T[] d = Arrays.copyOf(data, size());
+            int i = data.length;
+
+            final Iterator<T> is = newDynamicInstances();
+            while (is.hasNext()) {
+                final T instance = is.next();
+                d[i++] = instance;
+                instance.setSkillID(i);
+            }
+            data = d;
+        }
+        updateAfterPrepareAppend(chunkMap);
     }
 
 }
