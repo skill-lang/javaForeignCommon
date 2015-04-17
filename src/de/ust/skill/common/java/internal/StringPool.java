@@ -222,7 +222,9 @@ public class StringPool implements StringAccess {
 
     @Override
     public boolean add(String e) {
-        return newStrings.add(e);
+        if (e != null)
+            return newStrings.add(e);
+        return false;
     }
 
     @Override
