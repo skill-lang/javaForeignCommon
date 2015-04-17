@@ -60,7 +60,7 @@ public class SkillObject {
      *            the new value of the field
      * @note if field is not a distributed field of this type, then anything may happen
      */
-    public <T> void set(de.ust.skill.common.java.api.FieldDeclaration<T, ? super SkillObject> field, T value) {
+    public <T> void set(de.ust.skill.common.java.api.FieldDeclaration<T> field, T value) {
         field.setR(this, value);
     }
 
@@ -74,9 +74,8 @@ public class SkillObject {
      *       parameter on each overload, although this pattern would automagically make everything work as intended and
      *       the user would always know whether using a field declaration on a specific instance would work well.
      */
-    @SuppressWarnings("unchecked")
-    public <T> T get(de.ust.skill.common.java.api.FieldDeclaration<T, ?> field) {
-        return ((FieldDeclaration<T, SkillObject>) field).getR(this);
+    public <T> T get(de.ust.skill.common.java.api.FieldDeclaration<T> field) {
+        return field.getR(this);
     }
 
     /**

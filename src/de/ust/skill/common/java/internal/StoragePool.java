@@ -368,7 +368,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public Iterable<? extends de.ust.skill.common.java.api.FieldDeclaration<?, T>> fields() {
+    public Iterable<? extends FieldDeclaration<?, T>> fields() {
         return fields;
     }
 

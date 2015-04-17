@@ -107,7 +107,7 @@ public abstract class SkillState implements SkillFile {
 
             // add missing field declarations
             HashSet<String> fieldNames = new HashSet<>();
-            for (de.ust.skill.common.java.api.FieldDeclaration<?, ?> f : p.fields())
+            for (de.ust.skill.common.java.api.FieldDeclaration<?> f : p.fields())
                 fieldNames.add(f.name());
 
             // ensure existence of known fields

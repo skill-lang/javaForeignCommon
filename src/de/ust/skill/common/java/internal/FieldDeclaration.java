@@ -23,7 +23,7 @@ import de.ust.skill.common.jvm.streams.MappedOutStream;
  * @author Timm Felden
  */
 abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
-        de.ust.skill.common.java.api.FieldDeclaration<T, Obj> {
+        de.ust.skill.common.java.api.FieldDeclaration<T> {
 
     /**
      * @note types may change during file parsing. this may seem like a hack, but it makes file parser implementation a

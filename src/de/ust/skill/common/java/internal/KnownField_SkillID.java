@@ -21,12 +21,12 @@ public class KnownField_SkillID<T extends SkillObject> extends FieldDeclaration<
     }
 
     @Override
-    public Long getR(T ref) {
+    public Long getR(SkillObject ref) {
         return ref.skillID;
     }
 
     @Override
-    public void setR(T ref, Long value) {
+    public void setR(SkillObject ref, Long value) {
         ref.skillID = value;
     }
 
