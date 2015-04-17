@@ -35,5 +35,8 @@ public interface FieldDeclaration<T, Obj extends SkillObject> {
      */
     public T getR(Obj ref);
 
+    /**
+     * Generic setter for an object.
+     */
     public void setR(Obj ref, T value);
 }

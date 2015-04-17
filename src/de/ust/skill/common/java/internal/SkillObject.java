@@ -1,13 +1,11 @@
 package de.ust.skill.common.java.internal;
 
-
 /**
- * The root of the hierarchy of instances of skill user types. Annotations can
- * store arbitrary objects, thus this type has to exist explicitly.
+ * The root of the hierarchy of instances of skill user types. Annotations can store arbitrary objects, thus this type
+ * has to exist explicitly.
  * 
  * @author Timm Felden
- * @note This type definition is in internal, because we have to protect
- *       setSkillID from the user
+ * @note This type definition is in internal, because we have to protect setSkillID from the user
  * @param <This>
  *            this.type
  */
@@ -15,8 +13,7 @@ package de.ust.skill.common.java.internal;
 public class SkillObject {
 
     /**
-     * The constructor is protected to ensure that users do not break states
-     * accidentally
+     * The constructor is protected to ensure that users do not break states accidentally
      */
     protected SkillObject(long skillID) {
         this.skillID = skillID;
@@ -30,8 +27,7 @@ public class SkillObject {
     protected long skillID;
 
     /**
-     * create a delete mark, thus pointers to this instance will be replaced by
-     * null a pointer on flush
+     * create a delete mark, thus pointers to this instance will be replaced by null a pointer on flush
      */
     public void delete() {
         skillID = 0;
@@ -59,14 +55,12 @@ public class SkillObject {
      * reflective setter
      *
      * @param field
-     *            a field declaration instance as obtained from the storage
-     *            pools iterator
+     *            a field declaration instance as obtained from the storage pools iterator
      * @param value
      *            the new value of the field
-     * @note if field is not a distributed field of this type, then anything may
-     *       happen
+     * @note if field is not a distributed field of this type, then anything may happen
      */
-    public <T> void set(FieldDeclaration<T, ? super SkillObject> field, T value) {
+    public <T> void set(de.ust.skill.common.java.api.FieldDeclaration<T, ? super SkillObject> field, T value) {
         field.setR(this, value);
     }
 
@@ -74,18 +68,14 @@ public class SkillObject {
      * reflective getter
      *
      * @param field
-     *            a field declaration instance as obtained from the storage
-     *            pools iterator
-     * @note if field is not a distributed field of this type, then anything may
-     *       happen
-     * @note the second type parameter of field has to be this.type.
-     *       Unfortunately Java wont let us override the type parameter on each
-     *       overload, although this pattern would automagically make everything
-     *       work as intended and the user would always know whether using a
-     *       field declaration on a specific instance would work well.
+     *            a field declaration instance as obtained from the storage pools iterator
+     * @note if field is not a distributed field of this type, then anything may happen
+     * @note the second type parameter of field has to be this.type. Unfortunately Java wont let us override the type
+     *       parameter on each overload, although this pattern would automagically make everything work as intended and
+     *       the user would always know whether using a field declaration on a specific instance would work well.
      */
     @SuppressWarnings("unchecked")
-    public <T> T get(FieldDeclaration<T, ?> field) {
+    public <T> T get(de.ust.skill.common.java.api.FieldDeclaration<T, ?> field) {
         return ((FieldDeclaration<T, SkillObject>) field).getR(this);
     }
 
