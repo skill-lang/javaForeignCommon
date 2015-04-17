@@ -1,32 +1,15 @@
 package de.ust.skill.common.java.internal;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
 
-import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.internal.FieldDeclaration.ChunkEntry;
 import de.ust.skill.common.java.internal.parts.BulkChunk;
 import de.ust.skill.common.jvm.streams.FileOutputStream;
-import de.ust.skill.common.jvm.streams.MappedOutStream;
 
 final public class StateWriter extends SerializationFunctions {
-
-    private static final class Task<B extends SkillObject> {
-        public final FieldDeclaration<?, ?> f;
-        public final long begin;
-        public final long end;
-
-        Task(FieldDeclaration<?, ?> f, long begin, long end) {
-            this.f = f;
-            this.begin = begin;
-            this.end = end;
-        }
-    }
 
     public StateWriter(SkillState state, FileOutputStream out) throws Exception {
         super(state);
@@ -113,57 +96,9 @@ final public class StateWriter extends SerializationFunctions {
             }
         }
 
-        // write field data
-        Semaphore barrier = new Semaphore(0);
-        // async reads will post their errors in this queue
-        final ConcurrentLinkedQueue<SkillException> writeErrors = new ConcurrentLinkedQueue<SkillException>();
-
-        long baseOffset = out.position();
-        for (Task<?> t : data) {
-            final FieldDeclaration<?, ?> f = t.f;
-            final MappedOutStream outMap = out.map(baseOffset, t.begin, t.end);
-            // @note use semaphore instead of data.par, because map is not thread-safe
-            SkillState.pool.execute(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        f.write(outMap);
-                    } catch (SkillException e) {
-                        writeErrors.add(e);
-                    } catch (IOException e) {
-                        writeErrors.add(new SkillException("failed to write field " + f.toString(), e));
-                    } catch (Throwable e) {
-                        writeErrors.add(new SkillException("unexpected failure while writing field " + f.toString(), e));
-                    } finally {
-                        // ensure that writer can terminate, errors will be printed to command line anyway, and we wont
-                        // be able to recover, because errors can only happen if the skill implementation itself is
-                        // broken
-                        barrier.release(1);
-                    }
-                }
-            });
-        }
-        barrier.acquire(data.size());
-        out.close();
-
-        // report errors
-        for (SkillException e : writeErrors) {
-            e.printStackTrace();
-        }
-        if (!writeErrors.isEmpty())
-            throw writeErrors.peek();
-
-        /**
-         * **************** PHASE 4: CLEANING * ****************
-         */
-        // release data structures
-        state.stringType.clearIDs();
-        // unfix pools
-        for (StoragePool<?, ?> p : state.types) {
-            p.fixed(false);
-        }
+        writeFieldData(state, out, data);
     }
+
 
     /**
      * creates an lbpo map by recursively adding the local base pool offset to the map and adding all sub pools

@@ -16,6 +16,11 @@ import de.ust.skill.common.java.internal.SkillObject;
  */
 public interface FieldDeclaration<T, Obj extends SkillObject> {
     /**
+     * @return the skill type of this field
+     */
+    public FieldType<T> type();
+
+    /**
      * @return skill name of this field
      */
     public String name();

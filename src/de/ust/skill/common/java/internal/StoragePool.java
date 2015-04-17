@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
+import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.ReferenceType;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
@@ -369,6 +370,11 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     @Override
     public Iterable<? extends de.ust.skill.common.java.api.FieldDeclaration<?, T>> fields() {
         return fields;
+    }
+
+    @Override
+    public T make() throws SkillException {
+        throw new SkillException("We prevent reflective creation of new instances, because it is bad style!");
     }
 
     /**

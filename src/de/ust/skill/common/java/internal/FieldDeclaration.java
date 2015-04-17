@@ -31,6 +31,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      */
     protected FieldType<T> type;
 
+    @Override
     public final FieldType<T> type() {
         return type;
     }

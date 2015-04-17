@@ -144,6 +144,53 @@ public class StringPool implements StringAccess {
         }
     }
 
+    /**
+     * prepares serialization of the string pool and appends new Strings to the output stream.
+     */
+    public void prepareAndAppend(FileOutputStream out, StateAppender as) throws IOException {
+        final HashMap<String, Integer> serializationIDs = as.stringIDs;
+
+        // ensure all strings are present
+        for (int k = 1; k < stringPositions.size(); k++)
+            get(k);
+
+        // create inverse map
+        for (int i = 1; i < idMap.size(); i++) {
+            serializationIDs.put(idMap.get(i), i);
+        }
+
+        ArrayList<byte[]> todo = new ArrayList<byte[]>();
+
+        // instert new strings to the map;
+        // this is the place where duplications with lazy strings will be detected and eliminated
+        // this is also the place, where new instances are appended to the output file
+        for (String s : newStrings) {
+            if (!serializationIDs.containsKey(s)) {
+                serializationIDs.put(s, idMap.size());
+                idMap.add(s);
+                todo.add(s.getBytes());
+            }
+        }
+
+        // count
+        final int count = todo.size();
+        out.v64(count);
+
+        int off = 0;
+        // end
+        final ByteBuffer end = ByteBuffer.allocate(4 * count);
+        for (byte[] s : todo) {
+            off += s.length;
+            end.putInt(off);
+        }
+        out.put(end.array());
+
+        // data
+        for (byte[] s : todo)
+            out.put(s);
+
+    }
+
     @Override
     public boolean isEmpty() {
         return size() == 0;

@@ -24,10 +24,20 @@ public interface Access<T extends SkillObject> extends Collection<T> {
 
     /**
      * @return a type ordered Container iterator over all instances of T
-     * @note do not invoke this function, if you do not know what "type order"
-     *       means
+     * @note do not invoke this function, if you do not know what "type order" means
      */
     public Iterator<T> typeOrderIterator();
 
+    /**
+     * @return an iterator over all fields of T
+     */
     public Iterable<? extends FieldDeclaration<?, T>> fields();
+
+    /**
+     * @return a new T instance with default field values
+     * @throws SkillException
+     *             if no instance can be created. This is either caused by restrictions, such as @singleton, or by
+     *             invocation on unknown types, which are implicitly unmodifiable in this SKilL-implementation.
+     */
+    public T make() throws SkillException;
 }

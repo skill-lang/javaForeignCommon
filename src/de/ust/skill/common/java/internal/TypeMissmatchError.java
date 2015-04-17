@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.internal;
 
+import de.ust.skill.common.java.api.FieldType;
 import de.ust.skill.common.java.api.SkillException;
 
 /**

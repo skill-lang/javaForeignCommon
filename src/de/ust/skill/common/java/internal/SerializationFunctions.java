@@ -1,9 +1,13 @@
 package de.ust.skill.common.java.internal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 import java.util.function.ToIntFunction;
 
+import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantI16;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantI32;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantI64;
@@ -13,6 +17,8 @@ import de.ust.skill.common.java.internal.fieldTypes.ConstantV64;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
+import de.ust.skill.common.jvm.streams.FileOutputStream;
+import de.ust.skill.common.jvm.streams.MappedOutStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
 /**
@@ -22,6 +28,21 @@ import de.ust.skill.common.jvm.streams.OutStream;
  * @author Timm Felden
  */
 abstract public class SerializationFunctions {
+
+    /**
+     * Data structure used for parallel serialization scheduling
+     */
+    protected static final class Task<B extends SkillObject> {
+        public final FieldDeclaration<?, ?> f;
+        public final long begin;
+        public final long end;
+
+        Task(FieldDeclaration<?, ?> f, long begin, long end) {
+            this.f = f;
+            this.begin = begin;
+            this.end = end;
+        }
+    }
 
     protected final SkillState state;
     protected final HashMap<String, Integer> stringIDs;
@@ -136,6 +157,60 @@ abstract public class SerializationFunctions {
         default:
             out.v64(t.typeID);
             return;
+        }
+    }
+
+    protected final static void writeFieldData(SkillState state, FileOutputStream out, ArrayList<Task<?>> data)
+            throws IOException, InterruptedException {
+
+        final Semaphore barrier = new Semaphore(0);
+        // async reads will post their errors in this queue
+        final ConcurrentLinkedQueue<SkillException> writeErrors = new ConcurrentLinkedQueue<SkillException>();
+
+        long baseOffset = out.position();
+        for (Task<?> t : data) {
+            final FieldDeclaration<?, ?> f = t.f;
+            final MappedOutStream outMap = out.map(baseOffset, t.begin, t.end);
+            // @note use semaphore instead of data.par, because map is not thread-safe
+            SkillState.pool.execute(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        f.write(outMap);
+                    } catch (SkillException e) {
+                        writeErrors.add(e);
+                    } catch (IOException e) {
+                        writeErrors.add(new SkillException("failed to write field " + f.toString(), e));
+                    } catch (Throwable e) {
+                        writeErrors.add(new SkillException("unexpected failure while writing field " + f.toString(), e));
+                    } finally {
+                        // ensure that writer can terminate, errors will be printed to command line anyway, and we wont
+                        // be able to recover, because errors can only happen if the skill implementation itself is
+                        // broken
+                        barrier.release(1);
+                    }
+                }
+            });
+        }
+        barrier.acquire(data.size());
+        out.close();
+
+        // report errors
+        for (SkillException e : writeErrors) {
+            e.printStackTrace();
+        }
+        if (!writeErrors.isEmpty())
+            throw writeErrors.peek();
+
+        /**
+         * **************** PHASE 4: CLEANING * ****************
+         */
+        // release data structures
+        state.stringType.clearIDs();
+        // unfix pools
+        for (StoragePool<?, ?> p : state.types) {
+            p.fixed(false);
         }
     }
 
