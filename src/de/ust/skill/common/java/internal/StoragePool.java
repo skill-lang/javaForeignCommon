@@ -121,7 +121,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
             is.add(newObjects.iterator());
         for (SubPool<? extends T, B> sub : subPools) {
             Iterator<? extends T> subIter = sub.newDynamicInstances();
-            if (!subIter.hasNext())
+            if (subIter.hasNext())
                 is.add(subIter);
         }
         return Iterators.<T> concatenate(is);
