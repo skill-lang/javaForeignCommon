@@ -136,7 +136,8 @@ public class StringPool implements StringAccess {
                 off += idMap.get(i).getBytes().length;
                 end.putInt(off);
             }
-            out.put(end.array());
+            end.rewind();
+            out.put(end);
 
             // data
             for (int i = 1; i < idMap.size(); i++)
