@@ -3,6 +3,7 @@ package de.ust.skill.common.java.internal.fieldTypes;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.StringPool;
 import de.ust.skill.common.jvm.streams.InStream;
@@ -44,7 +45,7 @@ public final class StringType extends FieldType<String> implements
 		return result;
 	}
 
-	long singleOffset(String name) {
+    public long singleOffset(String name) {
 		return V64.singleV64Offset(stringIDs.get(name));
 	}
 

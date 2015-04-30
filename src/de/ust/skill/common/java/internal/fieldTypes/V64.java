@@ -62,7 +62,7 @@ public final class V64 extends IntegerType<Long> {
 	/**
 	 * helper method used by other offset calculations
 	 */
-	final static long singleV64Offset(long v) {
+    public final static long singleV64Offset(long v) {
 		if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
 			return 1;
 		} else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {

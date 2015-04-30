@@ -2,6 +2,7 @@ package de.ust.skill.common.java.api;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import de.ust.skill.common.java.internal.SkillObject;
 
@@ -73,6 +74,11 @@ public interface SkillFile {
      * @return iterator over all user types
      */
     public Iterable<? extends Access<? extends SkillObject>> allTypes();
+
+    /**
+     * @return stream over all user types
+     */
+    public Stream<? extends Access<? extends SkillObject>> allTypesStream();
 
     /**
      * Set a new path for the file. This will influence the next flush/close operation.

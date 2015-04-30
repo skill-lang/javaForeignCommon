@@ -16,74 +16,79 @@ import de.ust.skill.common.jvm.streams.OutStream;
  * 
  * @author Timm Felden
  */
-public final class Annotation extends FieldType<SkillObject> implements
-		ReferenceType {
+public final class Annotation extends FieldType<SkillObject> implements ReferenceType {
 
-	private final StringType strings;
-	private final ArrayList<StoragePool<?, ?>> types;
+    private final StringType strings;
+    private final ArrayList<StoragePool<?, ?>> types;
 
-	/**
-	 * @param types
-	 *            the array list containing all types valid inside of a state
-	 * @note types can grow after passing the pointer to the annotation type.
-	 *       This behavior is required in order to implement reflective
-	 *       annotation parsing correctly.
-	 * @note can not take a state as argument, because it may not exist yet
-	 */
-	public Annotation(ArrayList<StoragePool<?, ?>> types, StringType strings) {
-		super(5);
-		this.types = types;
-		this.strings = strings;
-		assert types != null;
-		assert strings != null;
-	}
+    /**
+     * @param types
+     *            the array list containing all types valid inside of a state
+     * @note types can grow after passing the pointer to the annotation type. This behavior is required in order to
+     *       implement reflective annotation parsing correctly.
+     * @note can not take a state as argument, because it may not exist yet
+     */
+    public Annotation(ArrayList<StoragePool<?, ?>> types, StringType strings) {
+        super(5);
+        this.types = types;
+        this.strings = strings;
+        assert types != null;
+        assert strings != null;
+    }
 
-	@Override
-	public SkillObject readSingleField(InStream in) {
-		final int t = (int) in.v64();
-		final long f = in.v64();
-		if (0 == t)
-			return null;
-		return types.get(t - 1).getByID(f);
-	}
+    @Override
+    public SkillObject readSingleField(InStream in) {
+        final int t = (int) in.v64();
+        final long f = in.v64();
+        if (0 == t)
+            return null;
+        return types.get(t - 1).getByID(f);
+    }
 
-	@Override
-	public long calculateOffset(Collection<SkillObject> xs) {
-		long result = 0L;
-		for (SkillObject ref : xs) {
+    @Override
+    public long calculateOffset(Collection<SkillObject> xs) {
+        long result = 0L;
+        for (SkillObject ref : xs) {
 
-			if (ref instanceof NamedType)
-				result += strings.singleOffset(((NamedType) ref).τName());
-			else
-				result += strings.singleOffset(ref.getClass().getSimpleName()
-						.toLowerCase());
+            if (ref instanceof NamedType)
+                result += strings.singleOffset(((NamedType) ref).τName());
+            else
+                result += strings.singleOffset(ref.getClass().getSimpleName().toLowerCase());
 
-			result += V64.singleV64Offset(ref.getSkillID());
-		}
+            result += V64.singleV64Offset(ref.getSkillID());
+        }
 
-		return result;
-	}
+        return result;
+    }
 
-	@Override
-	public void writeSingleField(SkillObject ref, OutStream out)
-			throws IOException {
-		if (null == ref) {
-			// magic trick!
-			out.i16((short) 0);
-			return;
-		}
+    public long singleOffset(SkillObject ref) {
+        final long name;
+        if (ref instanceof NamedType)
+            name = strings.singleOffset(((NamedType) ref).τName());
+        else
+            name = strings.singleOffset(ref.getClass().getSimpleName().toLowerCase());
 
-		if (ref instanceof NamedType)
-			strings.writeSingleField(((NamedType) ref).τName(), out);
-		else
-			strings.writeSingleField(ref.getClass().getSimpleName()
-					.toLowerCase(), out);
-		out.v64(ref.getSkillID());
+        return name + V64.singleV64Offset(ref.getSkillID());
+    }
 
-	}
+    @Override
+    public void writeSingleField(SkillObject ref, OutStream out) throws IOException {
+        if (null == ref) {
+            // magic trick!
+            out.i16((short) 0);
+            return;
+        }
 
-	@Override
-	public String toString() {
-		return "annotation";
-	}
+        if (ref instanceof NamedType)
+            strings.writeSingleField(((NamedType) ref).τName(), out);
+        else
+            strings.writeSingleField(ref.getClass().getSimpleName().toLowerCase(), out);
+        out.v64(ref.getSkillID());
+
+    }
+
+    @Override
+    public String toString() {
+        return "annotation";
+    }
 }

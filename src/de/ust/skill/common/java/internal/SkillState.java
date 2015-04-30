@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
+import java.util.stream.Stream;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillException;
@@ -238,5 +239,10 @@ public abstract class SkillState implements SkillFile {
     @Override
     final public Iterable<? extends Access<? extends SkillObject>> allTypes() {
         return types;
+    }
+
+    @Override
+    final public Stream<? extends Access<? extends SkillObject>> allTypesStream() {
+        return types.stream();
     }
 }
