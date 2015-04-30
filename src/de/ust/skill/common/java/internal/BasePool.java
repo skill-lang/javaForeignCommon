@@ -1,8 +1,8 @@
 package de.ust.skill.common.java.internal;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import de.ust.skill.common.java.internal.parts.Chunk;
@@ -118,7 +118,7 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
         updateAfterCompress(lbpoMap);
     }
 
-    final void prepareAppend(HashMap<FieldDeclaration<?, ?>, Chunk> chunkMap) {
+    final void prepareAppend(Map<FieldDeclaration<?, ?>, Chunk> chunkMap) {
         boolean newInstances = newDynamicInstances().hasNext();
 
         // check if we have to append at all

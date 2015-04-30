@@ -2,7 +2,9 @@ package de.ust.skill.common.java.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -39,7 +41,7 @@ final public class StateAppender extends SerializationFunctions {
         // serialization
         // index → bpsi
         final int[] lbpoMap = new int[state.types.size()];
-        final HashMap<FieldDeclaration<?, ?>, Chunk> chunkMap = new HashMap<>();
+        final Map<FieldDeclaration<?, ?>, Chunk> chunkMap = Collections.synchronizedMap(new HashMap<>());
         state.types.stream().parallel().forEach(p -> {
             if (p instanceof BasePool<?>) {
                 makeLBPOMap(p, lbpoMap, 0);

@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
@@ -425,7 +425,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     /**
      * called after a prepare append operation to write empty the new objects buffer and to set blocks correctly
      */
-    protected final void updateAfterPrepareAppend(HashMap<FieldDeclaration<?, ?>, Chunk> chunkMap) {
+    protected final void updateAfterPrepareAppend(Map<FieldDeclaration<?, ?>, Chunk> chunkMap) {
         final boolean newInstances = newDynamicInstances().hasNext();
         final boolean newPool = blocks.isEmpty();
         final boolean newField;
