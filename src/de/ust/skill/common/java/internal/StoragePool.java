@@ -362,7 +362,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         ArrayList<Iterator<? extends T>> is = new ArrayList<>(subPools.size() + 1);
         is.add(staticInstances());
         for (SubPool<? extends T, B> s : subPools)
-            is.add(s.staticInstances());
+            is.add(s.typeOrderIterator());
 
         return Iterators.concatenate(is);
     }
