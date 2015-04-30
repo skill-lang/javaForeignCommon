@@ -7,5 +7,13 @@ package de.ust.skill.common.java.internal;
  * @author Timm Felden
  */
 public interface NamedType {
+    /**
+     * @return the skill name of the type
+     */
     public String τName();
+
+    /**
+     * @return the pool that is managing instances of this type
+     */
+    public StoragePool<?, ?> τPool();
 }

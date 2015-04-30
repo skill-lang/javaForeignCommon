@@ -71,7 +71,7 @@ public abstract class FileParser<State extends SkillState> {
         this.in = in;
         Strings = new StringPool(in);
         StringType = new StringType(Strings);
-        Annotation = new Annotation(types, StringType);
+        Annotation = new Annotation(types);
     }
 
     final protected void stringBlock() throws ParseException {

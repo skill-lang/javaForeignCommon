@@ -122,6 +122,9 @@ public abstract class SkillState implements SkillFile {
                 f.finish(barrier, readErrors);
         }
 
+        // fix types in the Annotation-runtime type, because we need it in offset calculation
+        this.annotationType.fixTypes(this.poolByName());
+
         // await async reads
         try {
             barrier.acquire();

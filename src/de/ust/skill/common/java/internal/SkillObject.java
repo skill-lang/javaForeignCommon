@@ -95,6 +95,11 @@ public class SkillObject {
         }
 
         @Override
+        public StoragePool<?, ?> τPool() {
+            return τPool;
+        }
+
+        @Override
         public String τName() {
             return τPool.name;
         }

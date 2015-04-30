@@ -63,7 +63,7 @@ final public class StateWriter extends SerializationFunctions {
             if (null == p.superPool)
                 out.i8((byte) 0);
             else {
-                string(p.superPool.name, out);
+                out.v64(p.superPool.typeID - 31);
                 if (0L != LCount)
                     out.v64(lbpoMap[p.typeID - 32]);
             }

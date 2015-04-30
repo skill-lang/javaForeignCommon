@@ -3,6 +3,7 @@ package de.ust.skill.common.java.internal.fieldTypes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.NamedType;
@@ -18,8 +19,8 @@ import de.ust.skill.common.jvm.streams.OutStream;
  */
 public final class Annotation extends FieldType<SkillObject> implements ReferenceType {
 
-    private final StringType strings;
     private final ArrayList<StoragePool<?, ?>> types;
+    private HashMap<String, StoragePool<?, ?>> typeByName = null;
 
     /**
      * @param types
@@ -28,12 +29,15 @@ public final class Annotation extends FieldType<SkillObject> implements Referenc
      *       implement reflective annotation parsing correctly.
      * @note can not take a state as argument, because it may not exist yet
      */
-    public Annotation(ArrayList<StoragePool<?, ?>> types, StringType strings) {
+    public Annotation(ArrayList<StoragePool<?, ?>> types) {
         super(5);
         this.types = types;
-        this.strings = strings;
         assert types != null;
-        assert strings != null;
+    }
+
+    public void fixTypes(HashMap<String, StoragePool<?, ?>> poolByName) {
+        assert typeByName == null;
+        typeByName = poolByName;
     }
 
     @Override
@@ -49,24 +53,34 @@ public final class Annotation extends FieldType<SkillObject> implements Referenc
     public long calculateOffset(Collection<SkillObject> xs) {
         long result = 0L;
         for (SkillObject ref : xs) {
+            if (null == ref)
+                result += 2;
+            else {
+                if (ref instanceof NamedType)
+                    result += V64.singleV64Offset(((NamedType) ref).τPool().typeID() - 31);
+                else
+                    result += V64
+                            .singleV64Offset(typeByName.get(ref.getClass().getSimpleName().toLowerCase()).typeID() - 31);
 
-            if (ref instanceof NamedType)
-                result += strings.singleOffset(((NamedType) ref).τName());
-            else
-                result += strings.singleOffset(ref.getClass().getSimpleName().toLowerCase());
-
-            result += V64.singleV64Offset(ref.getSkillID());
+                result += V64.singleV64Offset(ref.getSkillID());
+            }
         }
 
         return result;
     }
 
+    /**
+     * used for simple offset calculation
+     */
     public long singleOffset(SkillObject ref) {
+        if (null == ref)
+            return 2L;
+
         final long name;
         if (ref instanceof NamedType)
-            name = strings.singleOffset(((NamedType) ref).τName());
+            name = V64.singleV64Offset(((NamedType) ref).τPool().typeID() - 31);
         else
-            name = strings.singleOffset(ref.getClass().getSimpleName().toLowerCase());
+            name = V64.singleV64Offset(typeByName.get(ref.getClass().getSimpleName().toLowerCase()).typeID() - 31);
 
         return name + V64.singleV64Offset(ref.getSkillID());
     }
@@ -80,9 +94,9 @@ public final class Annotation extends FieldType<SkillObject> implements Referenc
         }
 
         if (ref instanceof NamedType)
-            strings.writeSingleField(((NamedType) ref).τName(), out);
+            out.v64(((NamedType) ref).τPool().typeID() - 31);
         else
-            strings.writeSingleField(ref.getClass().getSimpleName().toLowerCase(), out);
+            out.v64(typeByName.get(ref.getClass().getSimpleName().toLowerCase()).typeID() - 31);
         out.v64(ref.getSkillID());
 
     }

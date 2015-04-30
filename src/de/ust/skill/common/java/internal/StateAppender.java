@@ -112,7 +112,7 @@ final public class StateAppender extends SerializationFunctions {
                     if (null == p.superName()) {
                         out.i8((byte) 0);
                     } else {
-                        string(p.superName(), out);
+                        out.v64(p.superPool.typeID - 31);
                         out.v64(lbpoMap[p.typeID - 32]);
                     }
                 } else if (null != p.superName()) {
