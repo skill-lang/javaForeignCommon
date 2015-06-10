@@ -201,7 +201,6 @@ public abstract class SkillState implements SkillFile {
 
     @Override
     public void flush() throws SkillException {
-        check();
         try {
             switch (writeMode) {
             case Write:

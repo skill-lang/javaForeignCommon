@@ -74,6 +74,11 @@ abstract public class SerializationFunctions {
             }
         }
 
+        /**
+         * check consistency of the state, now that we aggregated all instances
+         */
+        state.check();
+
         stringIDs = state.stringType.resetIDs();
     }
 

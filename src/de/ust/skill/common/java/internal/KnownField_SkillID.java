@@ -41,6 +41,11 @@ public class KnownField_SkillID<T extends SkillObject> extends FieldDeclaration<
     }
 
     @Override
+    void check() {
+        // always correct
+    }
+
+    @Override
     protected void read(MappedInStream in, Chunk last) {
         throw new NoSuchMethodError("one can not read auto fields!");
     }

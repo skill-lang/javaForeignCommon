@@ -74,8 +74,9 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
     void check() {
         if (!restrictions.isEmpty())
             for (Obj x : owner)
-                for (FieldRestriction<T> r : restrictions)
-                    r.check(x.get(this));
+                if (!x.isDeleted())
+                    for (FieldRestriction<T> r : restrictions)
+                        r.check(x.get(this));
     }
 
     @Override
