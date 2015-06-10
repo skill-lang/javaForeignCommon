@@ -2,6 +2,7 @@ package de.ust.skill.common.java.internal.fieldTypes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
@@ -21,6 +22,16 @@ public final class ConstantLengthArray<T> extends SingleArgumentType<ArrayList<T
         for (int i = (int) length; i != 0; i--)
             rval.add(groundType.readSingleField(in));
         return rval;
+    }
+
+    @Override
+    public long calculateOffset(Collection<ArrayList<T>> xs) {
+        long result = 0L;
+        for (ArrayList<T> x : xs) {
+            result += groundType.calculateOffset(x);
+        }
+
+        return result;
     }
 
     @Override
