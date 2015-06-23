@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import de.ust.skill.common.java.api.SkillException;
+import de.ust.skill.common.java.internal.fieldDeclarations.AutoField;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.BoolType;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantI16;
@@ -398,7 +399,7 @@ public abstract class FileParser<State extends SkillState> {
      * helper for pool creation in generated code; optimization for all pools that do not have auto fields
      */
     @SuppressWarnings("unchecked")
-    protected static <T extends SkillObject> FieldDeclaration<?, T>[] noAutoFields() {
-        return (FieldDeclaration<?, T>[]) StoragePool.noAutoFields;
+    protected static <T extends SkillObject> AutoField<?, T>[] noAutoFields() {
+        return (AutoField<?, T>[]) StoragePool.noAutoFields;
     }
 }

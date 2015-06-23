@@ -51,7 +51,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      * 
      * @note index is > 0, if the field is an actual data field
      * @note index = 0, if the field is SKilLID
-     * @note index is < 0, if the field is an auto field
+     * @note index is <= 0, if the field is an auto field (or SKilLID)
      */
     final int index;
 

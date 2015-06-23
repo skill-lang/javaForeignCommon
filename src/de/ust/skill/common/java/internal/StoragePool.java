@@ -12,6 +12,7 @@ import java.util.Set;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillException;
+import de.ust.skill.common.java.internal.fieldDeclarations.AutoField;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.ReferenceType;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
@@ -95,20 +96,19 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      *       O(1); the array cannot change anyway
      * @note the initial type constructor will already allocate an array of the correct size, because the right size is
      *       statically known (a generation time constant)
-     * @note we use FieldDeclaration instead of AutoField in order to optimize away invokInterface calls
      */
-    protected final FieldDeclaration<?, T>[] autoFields;
+    protected final AutoField<?, T>[] autoFields;
     /**
      * used as placeholder, if there are no auto fields at all to optimize allocation time and memory usage
      */
-    static final FieldDeclaration<?, ?>[] noAutoFields = new FieldDeclaration<?, ?>[0];
+    static final AutoField<?, ?>[] noAutoFields = new AutoField<?, ?>[0];
 
     /**
      * @return magic cast to placeholder which well never fail at runtime, because the array is empty anyway
      */
     @SuppressWarnings("unchecked")
-    protected static final <T extends SkillObject> FieldDeclaration<?, T>[] noAutoFields() {
-        return (FieldDeclaration<?, T>[]) noAutoFields;
+    protected static final <T extends SkillObject> AutoField<?, T>[] noAutoFields() {
+        return (AutoField<?, T>[]) noAutoFields;
     }
 
     /**
@@ -242,7 +242,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     @SuppressWarnings("unchecked")
     StoragePool(int poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields,
-            FieldDeclaration<?, T>[] autoFields) {
+            AutoField<?, T>[] autoFields) {
         super(32 + poolIndex);
         this.name = name;
         this.superPool = superPool;

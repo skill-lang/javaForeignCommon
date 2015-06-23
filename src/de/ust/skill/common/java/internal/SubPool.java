@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
+import de.ust.skill.common.java.internal.fieldDeclarations.AutoField;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.iterators.Iterators;
 
@@ -15,7 +16,7 @@ import de.ust.skill.common.java.iterators.Iterators;
 public class SubPool<T extends B, B extends SkillObject> extends StoragePool<T, B> {
 
     public SubPool(int poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields,
-            FieldDeclaration<?, T>[] autoFields) {
+            AutoField<?, T>[] autoFields) {
         super(poolIndex, name, superPool, knownFields, autoFields);
         superPool.subPools.add(this);
     }

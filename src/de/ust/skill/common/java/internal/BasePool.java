@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import de.ust.skill.common.java.internal.fieldDeclarations.AutoField;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.iterators.Iterators;
 
@@ -39,7 +40,7 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      */
     protected SkillState owner = null;
 
-    public BasePool(int poolIndex, String name, Set<String> knownFields, FieldDeclaration<?, T>[] autoFields) {
+    public BasePool(int poolIndex, String name, Set<String> knownFields, AutoField<?, T>[] autoFields) {
         super(poolIndex, name, null, knownFields, autoFields);
     }
 
