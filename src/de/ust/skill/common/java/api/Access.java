@@ -31,7 +31,7 @@ public interface Access<T extends SkillObject> extends Collection<T> {
     /**
      * @return an iterator over all fields of T
      */
-    public Iterable<? extends FieldDeclaration<?>> fields();
+    public Iterator<? extends FieldDeclaration<?>> fields();
 
     /**
      * @return a new T instance with default field values

@@ -108,7 +108,7 @@ public abstract class SkillState implements SkillFile {
 
             // add missing field declarations
             HashSet<String> fieldNames = new HashSet<>();
-            for (de.ust.skill.common.java.api.FieldDeclaration<?> f : p.fields())
+            for (de.ust.skill.common.java.api.FieldDeclaration<?> f : p.dataFields)
                 fieldNames.add(f.name());
 
             // ensure existence of known fields
@@ -118,7 +118,7 @@ public abstract class SkillState implements SkillFile {
             }
 
             // read known fields
-            for (FieldDeclaration<?, ?> f : p.fields)
+            for (FieldDeclaration<?, ?> f : p.dataFields)
                 f.finish(barrier, readErrors);
         }
 
@@ -189,7 +189,7 @@ public abstract class SkillState implements SkillFile {
         // TODO make pools check fields, because they can optimize checks per instance and remove redispatching, if no
         // restrictions apply anyway
         for (StoragePool<?, ?> p : types)
-            for (FieldDeclaration<?, ?> f : p.fields)
+            for (FieldDeclaration<?, ?> f : p.dataFields)
                 try {
                     f.check();
                 } catch (SkillException e) {

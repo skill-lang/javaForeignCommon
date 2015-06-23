@@ -62,10 +62,11 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     final String name;
+
+    // type hierarchy
     final StoragePool<? super T, B> superPool;
     protected final BasePool<B> basePool;
     final ArrayList<SubPool<? extends T, B>> subPools = new ArrayList<>();
-    public final Set<String> knownFields;
 
     /**
      * used by generated file parsers
@@ -82,20 +83,48 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     /**
-     * @note the fieldIndex is either identical to the position in fields; 0 is used for skillID
+     * names of known fields, the actual field information is given in the generated addKnownFiled method.
      */
-    protected final ArrayList<FieldDeclaration<?, T>> fields;
+    public final Set<String> knownFields;
 
     /**
-     * all fields that are declared as auto
+     * all fields that are declared as auto, including skillID
+     * 
+     * @note stores fields at index "-f.index"
+     * @note sub-constructor adds auto fields from super types to this array; this is an optimization to make iteration
+     *       O(1); the array cannot change anyway
+     * @note the initial type constructor will already allocate an array of the correct size, because the right size is
+     *       statically known (a generation time constant)
+     * @note we use FieldDeclaration instead of AutoField in order to optimize away invokInterface calls
      */
     protected final FieldDeclaration<?, T>[] autoFields;
+    /**
+     * used as placeholder, if there are no auto fields at all to optimize allocation time and memory usage
+     */
     static final FieldDeclaration<?, ?>[] noAutoFields = new FieldDeclaration<?, ?>[0];
 
+    /**
+     * @return magic cast to placeholder which well never fail at runtime, because the array is empty anyway
+     */
     @SuppressWarnings("unchecked")
-    protected static <T extends SkillObject> FieldDeclaration<?, T>[] noAutoFields() {
+    protected static final <T extends SkillObject> FieldDeclaration<?, T>[] noAutoFields() {
         return (FieldDeclaration<?, T>[]) noAutoFields;
     }
+
+    /**
+     * @return an iterator over all auto fields
+     * @note O(T)
+     */
+    Iterator<FieldDeclaration<?, T>> allAutoFields() {
+        return Iterators.array(autoFields);
+    }
+
+    /**
+     * all fields that hold actual data
+     * 
+     * @note stores fields at index "f.index-1"
+     */
+    protected final ArrayList<FieldDeclaration<?, T>> dataFields;
 
     /**
      * The block layout of instances of this pool.
@@ -165,6 +194,9 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
      */
     int cachedSize;
 
+    /**
+     * !!internal use only!!
+     */
     public final boolean fixed() {
         return fixed;
     }
@@ -216,8 +248,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         this.superPool = superPool;
         this.basePool = null == superPool ? (BasePool<B>) this : superPool.basePool;
         this.knownFields = knownFields;
-        fields = new ArrayList<>(1 + knownFields.size());
-        fields.add(new KnownField_SkillID<T>(this));
+        dataFields = new ArrayList<>(knownFields.size());
         this.autoFields = autoFields;
     }
 
@@ -368,8 +399,8 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     @Override
-    public Iterable<? extends FieldDeclaration<?, T>> fields() {
-        return fields;
+    public Iterator<FieldDeclaration<?, T>> fields() {
+        return Iterators.<FieldDeclaration<?, T>> concatenate(Iterators.array(autoFields), dataFields.iterator());
     }
 
     @Override
@@ -395,14 +426,14 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     /**
-     * internal use only!
+     * internal use only! adds an unknown field
      */
     public <R> FieldDeclaration<R, T> addField(int ID, FieldType<R> type, String name,
             HashSet<FieldRestriction<?>> restrictions) {
         FieldDeclaration<R, T> f = new LazyField<R, T>(type, name, ID, this);
         for (FieldRestriction<?> r : restrictions)
             f.addRestriction(r);
-        fields.add(f);
+        dataFields.add(f);
         return f;
 
     }
@@ -431,7 +462,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         final boolean newField;
         {
             boolean exists = false;
-            for (FieldDeclaration<?, T> f : fields) {
+            for (FieldDeclaration<?, T> f : dataFields) {
                 if (f.noDataChunk()) {
                     exists = true;
                     break;
@@ -453,7 +484,7 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
             // @note: if this does not hold for p; then it will not hold for p.subPools either!
             if (newInstances || !newPool) {
                 // build field chunks
-                for (FieldDeclaration<?, T> f : fields) {
+                for (FieldDeclaration<?, T> f : dataFields) {
                     if (0 == f.index)
                         continue;
 

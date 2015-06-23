@@ -39,23 +39,19 @@ final public class StateWriter extends SerializationFunctions {
         HashMap<StoragePool<?, ?>, HashMap<FieldDeclaration<?, ?>, Future<Long>>> offsets = new HashMap<>();
         for (final StoragePool<?, ?> p : state.types) {
             HashMap<FieldDeclaration<?, ?>, Future<Long>> vs = new HashMap<>();
-            for (final FieldDeclaration<?, ?> f : p.fields)
-                if (f.index != 0) {
-                    vs.put(f, SkillState.pool.submit(new Callable<Long>() {
-                        @Override
-                        public Long call() throws Exception {
-                            return f.offset(p.blocks.getLast());
-                        }
-                    }));
-                }
+            for (final FieldDeclaration<?, ?> f : p.dataFields)
+                vs.put(f, SkillState.pool.submit(new Callable<Long>() {
+                    @Override
+                    public Long call() throws Exception {
+                        return f.offset(p.blocks.getLast());
+                    }
+                }));
             offsets.put(p, vs);
         }
 
         // write types
-        ArrayList<ArrayList<FieldDeclaration<?, ?>>> fieldQueue = new ArrayList<>();
+        ArrayList<FieldDeclaration<?, ?>> fieldQueue = new ArrayList<>();
         for (StoragePool<?, ?> p : state.types) {
-            ArrayList<FieldDeclaration<?, ?>> fields = new ArrayList<>(p.fields);
-            fields.removeIf(f -> 0 == f.index);
             string(p.name, out);
             long LCount = p.blocks.getLast().count;
             out.v64(LCount);
@@ -68,37 +64,34 @@ final public class StateWriter extends SerializationFunctions {
                     out.v64(lbpoMap[p.typeID - 32]);
             }
 
-            out.v64(fields.size());
-            fieldQueue.add(fields);
+            out.v64(p.dataFields.size());
+            fieldQueue.addAll(p.dataFields);
         }
 
         // write fields
         ArrayList<Task<?>> data = new ArrayList<>();
         long offset = 0L;
-        for (ArrayList<FieldDeclaration<?, ?>> fields : fieldQueue) {
-            for (FieldDeclaration<?, ?> f : fields) {
-                StoragePool<?, ?> p = f.owner;
-                HashMap<FieldDeclaration<?, ?>, Future<Long>> vs = offsets.get(p);
+        for (FieldDeclaration<?, ?> f : fieldQueue) {
+            StoragePool<?, ?> p = f.owner;
+            HashMap<FieldDeclaration<?, ?>, Future<Long>> vs = offsets.get(p);
 
-                // write info
-                out.v64(f.index);
-                string(f.name, out);
-                writeType(f.type, out);
-                restrictions(f, out);
-                long end = offset + vs.get(f).get();
-                out.v64(end);
+            // write info
+            out.v64(f.index);
+            string(f.name, out);
+            writeType(f.type, out);
+            restrictions(f, out);
+            long end = offset + vs.get(f).get();
+            out.v64(end);
 
-                // update chunks and prepare write data
-                f.dataChunks.clear();
-                f.dataChunks.add(new ChunkEntry(new BulkChunk(offset, end, p.size())));
-                data.add(new Task<>(f, offset, end));
-                offset = end;
-            }
+            // update chunks and prepare write data
+            f.dataChunks.clear();
+            f.dataChunks.add(new ChunkEntry(new BulkChunk(offset, end, p.size())));
+            data.add(new Task<>(f, offset, end));
+            offset = end;
         }
 
         writeFieldData(state, out, data);
     }
-
 
     /**
      * creates an lbpo map by recursively adding the local base pool offset to the map and adding all sub pools

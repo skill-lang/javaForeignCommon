@@ -329,7 +329,7 @@ public abstract class FileParser<State extends SkillState> {
         for (StoragePool<?, ?> p : localFields.keySet()) {
 
             // read field part
-            int totalFieldCount = p.fields.size();
+            int totalFieldCount = p.dataFields.size();
 
             final Block lastBlock = p.blocks.get(p.blocks.size() - 1);
 
@@ -355,7 +355,7 @@ public abstract class FileParser<State extends SkillState> {
                 } else {
                     // field already seen
                     end = in.v64();
-                    p.fields.get(ID).addChunk(new SimpleChunk(offset, end, lastBlock.bpo, lastBlock.count));
+                    p.dataFields.get(ID - 1).addChunk(new SimpleChunk(offset, end, lastBlock.bpo, lastBlock.count));
 
                 }
                 offset = end;
@@ -374,7 +374,7 @@ public abstract class FileParser<State extends SkillState> {
         // process field data declarations in order of appearance and update
         // offsets to absolute positions
         for (DataEntry e : fieldDataQueue) {
-            final FieldDeclaration<?, ?> f = e.owner.fields.get(e.fieldID);
+            final FieldDeclaration<?, ?> f = e.owner.dataFields.get(e.fieldID - 1);
 
             // make begin/end absolute
             final long end;
@@ -389,7 +389,7 @@ public abstract class FileParser<State extends SkillState> {
     }
 
     /**
-     * helper for pool creation in generated code
+     * helper for pool creation in generated code; optimization for all pools that do not have auto fields
      */
     @SuppressWarnings("unchecked")
     protected static <T extends SkillObject> FieldDeclaration<?, T>[] noAutoFields() {

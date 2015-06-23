@@ -49,7 +49,9 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
     /**
      * index as used in the file
      * 
-     * @note this is 0 iff the field will not be serialized (auto & skillID)
+     * @note index is > 0, if the field is an actual data field
+     * @note index = 0, if the field is SKilLID
+     * @note index is < 0, if the field is an auto field
      */
     final int index;
 

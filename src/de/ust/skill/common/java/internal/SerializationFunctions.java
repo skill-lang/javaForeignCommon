@@ -62,9 +62,7 @@ abstract public class SerializationFunctions {
 
         for (StoragePool<?, ?> p : state.types) {
             strings.add(p.name);
-            for (FieldDeclaration<?, ?> f : p.fields) {
-                if (0 == f.index)
-                    continue;
+            for (FieldDeclaration<?, ?> f : p.dataFields) {
 
                 strings.add(f.name);
                 if (f.type instanceof StringType) {

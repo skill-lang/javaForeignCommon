@@ -59,7 +59,7 @@ final public class StateAppender extends SerializationFunctions {
             // new instance or field?
             else if (p.size() > 0) {
                 boolean exists = false;
-                for (FieldDeclaration<?, ?> f : p.fields) {
+                for (FieldDeclaration<?, ?> f : p.dataFields) {
                     if (chunkMap.containsKey(f)) {
                         exists = true;
                         break;
@@ -96,8 +96,8 @@ final public class StateAppender extends SerializationFunctions {
         for (StoragePool<?, ?> p : rPools) {
             // generic append
             final boolean newPool = p.typeID - 32 >= newPoolIndex;
-            final ArrayList<FieldDeclaration<?, ?>> fields = new ArrayList<FieldDeclaration<?, ?>>(p.fields.size());
-            for (FieldDeclaration<?, ?> f : p.fields)
+            final ArrayList<FieldDeclaration<?, ?>> fields = new ArrayList<FieldDeclaration<?, ?>>(p.dataFields.size());
+            for (FieldDeclaration<?, ?> f : p.dataFields)
                 if (chunkMap.containsKey(f))
                     fields.add(f);
 

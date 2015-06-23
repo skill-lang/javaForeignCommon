@@ -122,9 +122,9 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
         boolean newInstances = newDynamicInstances().hasNext();
 
         // check if we have to append at all
-        if (!newInstances && !blocks.isEmpty() && !fields.isEmpty()) {
+        if (!newInstances && !blocks.isEmpty() && !dataFields.isEmpty()) {
             boolean done = true;
-            for (FieldDeclaration<?, T> f : fields) {
+            for (FieldDeclaration<?, T> f : dataFields) {
                 if (f.noDataChunk()) {
                     done = false;
                     break;
