@@ -86,7 +86,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
         return owner;
     }
 
-    public FieldDeclaration(FieldType<T> type, String name, int index, StoragePool<Obj, ? super Obj> owner) {
+    protected FieldDeclaration(FieldType<T> type, String name, int index, StoragePool<Obj, ? super Obj> owner) {
         this.type = type;
         this.name = name.intern(); // we will switch on names, thus we need to
                                    // intern them

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Stack;
 
+import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.BoolType;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantI16;
@@ -329,17 +330,17 @@ public abstract class FileParser<State extends SkillState> {
         for (StoragePool<?, ?> p : localFields.keySet()) {
 
             // read field part
-            int totalFieldCount = p.dataFields.size();
+            int legalFieldIDBarrier = 1 + p.dataFields.size();
 
             final Block lastBlock = p.blocks.get(p.blocks.size() - 1);
 
             for (int fieldCounter = localFields.get(p); fieldCounter != 0; fieldCounter--) {
                 final int ID = (int) in.v64();
-                if (ID > totalFieldCount || ID < 0)
+                if (ID > legalFieldIDBarrier || ID <= 0)
                     throw new ParseException(in, blockCounter, null, "Found an illegal field ID: %d", ID);
 
                 final long end;
-                if (ID == totalFieldCount) {
+                if (ID == legalFieldIDBarrier) {
                     // new field
                     final String fieldName = Strings.get(in.v64());
                     if (null == fieldName)
@@ -349,8 +350,13 @@ public abstract class FileParser<State extends SkillState> {
                     HashSet<FieldRestriction<?>> rest = fieldRestrictions(t);
                     end = in.v64();
 
-                    p.addField(ID, t, fieldName, rest).addChunk(new BulkChunk(offset, end, p.size()));
-                    totalFieldCount += 1;
+                    try {
+                        p.addField(ID, t, fieldName, rest).addChunk(new BulkChunk(offset, end, p.size()));
+                    } catch (SkillException e) {
+                        // transform to parse exception with propper values
+                        throw new ParseException(in, blockCounter, null, e.getMessage());
+                    }
+                    legalFieldIDBarrier += 1;
 
                 } else {
                     // field already seen
