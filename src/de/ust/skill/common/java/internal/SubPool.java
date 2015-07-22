@@ -39,16 +39,22 @@ public class SubPool<T extends B, B extends SkillObject> extends StoragePool<T, 
     }
 
     @Override
-    public boolean insertInstance(int skillID) {
-        int i = skillID - 1;
-        if (null != basePool.data[i])
-            return false;
+    public void insertInstances() {
+        final Block last = blocks.getLast();
+        int i = (int) last.bpo;
+        int high = (int) (last.bpo + last.count);
+        B[] data = basePool.data;
+        while (i < high) {
+            if (null != data[i])
+                return;
 
-        @SuppressWarnings("unchecked")
-        T r = (T) (new SkillObject.SubType(this, skillID));
-        basePool.data[i] = r;
-        staticData.add(r);
-        return true;
+            @SuppressWarnings("unchecked")
+            T r = (T) (new SkillObject.SubType(this, i + 1));
+            data[i] = r;
+            staticData.add(r);
+
+            i += 1;
+        }
     }
 
     /**

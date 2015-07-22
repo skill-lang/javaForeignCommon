@@ -199,6 +199,7 @@ public abstract class SkillState implements SkillFile {
 
     }
 
+    @SuppressWarnings("unused")
     @Override
     public void flush() throws SkillException {
         try {

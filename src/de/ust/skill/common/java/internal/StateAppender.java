@@ -129,7 +129,7 @@ final public class StateAppender extends SerializationFunctions {
         }
 
         // write fields
-        final ArrayList<Task<?>> data = new ArrayList<>();
+        final ArrayList<Task> data = new ArrayList<>();
         long offset = 0L;
         for (ArrayList<FieldDeclaration<?, ?>> fields : fieldQueue) {
             for (FieldDeclaration<?, ?> f : fields) {
@@ -146,7 +146,7 @@ final public class StateAppender extends SerializationFunctions {
                 // put end offset and enqueue data
                 final long end = offset + vs.get(f).get();
                 out.v64(end);
-                data.add(new Task<>(f, offset, end));
+                data.add(new Task(f, offset, end));
                 offset = end;
             }
         }

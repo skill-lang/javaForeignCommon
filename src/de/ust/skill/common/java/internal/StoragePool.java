@@ -129,7 +129,11 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     /**
      * The block layout of instances of this pool.
      */
-    LinkedList<Block> blocks = new LinkedList<>();
+    final LinkedList<Block> blocks = new LinkedList<>();
+
+    protected LinkedList<Block> blocks() {
+        return blocks;
+    }
 
     /**
      * All stored objects, which have exactly the type T. Objects are stored as arrays of field entries. The types of
@@ -409,11 +413,9 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     /**
-     * insert a new T with default values and the given skillID into the pool
-     *
-     * @note implementation relies on an ascending order of insertion
+     * insert new T instances with default values based on the last block info
      */
-    abstract boolean insertInstance(int skillID);
+    abstract void insertInstances();
 
     protected final void updateAfterCompress(int[] lbpoMap) {
         blocks.clear();

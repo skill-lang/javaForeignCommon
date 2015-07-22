@@ -48,7 +48,7 @@ public class DistributedField<T, Obj extends SkillObject> extends FieldDeclarati
                 }
             }
         } catch (BufferUnderflowException e) {
-            throw new PoolSizeMissmatchError(dataChunks.size() - 1, last.begin, last.end, this);
+            throw new PoolSizeMissmatchError(dataChunks.size() - 1, last.begin, last.end, this, e);
         }
         final long lastPosition = in.position();
         if (lastPosition - firstPosition != last.end - last.begin)

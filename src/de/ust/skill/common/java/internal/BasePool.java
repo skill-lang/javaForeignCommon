@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.ust.skill.common.java.internal.fieldDeclarations.AutoField;
+import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.java.iterators.Iterators;
 
@@ -59,7 +60,6 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
 
     }
 
-    @SuppressWarnings("null")
     @Override
     public T getByID(long index) {
         if (0 == index)
@@ -70,24 +70,29 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
     /**
      * increase size of data array. Invoked by file parser only!
      */
-    void resizeData(int increase) {
-        data = Arrays.copyOf(data, data.length + increase);
+    void resizeData() {
+        data = Arrays.copyOf(data, data.length + (int) blocks.getLast().count);
     }
 
     /**
      * Static instances of base pool deal with unknown types only!
      */
     @Override
-    public boolean insertInstance(int skillID) {
-        int i = skillID - 1;
-        if (null != data[i])
-            return false;
+    public void insertInstances() {
+        final Block last = blocks.getLast();
+        int i = (int) last.bpo;
+        int high = (int) (last.bpo + last.count);
+        while (i < high) {
+            if (null != data[i])
+                return;
 
-        @SuppressWarnings("unchecked")
-        T r = (T) (new SkillObject.SubType(this, skillID));
-        data[i] = r;
-        staticData.add(r);
-        return true;
+            @SuppressWarnings("unchecked")
+            T r = (T) (new SkillObject.SubType(this, i + 1));
+            data[i] = r;
+            staticData.add(r);
+
+            i += 1;
+        }
     }
 
     @Override

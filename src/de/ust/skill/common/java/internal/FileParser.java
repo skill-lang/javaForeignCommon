@@ -44,6 +44,8 @@ import de.ust.skill.common.jvm.streams.FileInputStream;
  * The parser implementation is based on the denotational semantics given in TR14§6.
  *
  * @author Timm Felden
+ * @param <State>
+ *            the specific state used by the parser
  */
 public abstract class FileParser<State extends SkillState> {
     protected FileInputStream in;
@@ -268,8 +270,8 @@ public abstract class FileParser<State extends SkillState> {
                     else if (superID > types.size())
                         throw new ParseException(in, blockCounter, null,
                                 "Type %s refers to an ill-formed super type.\n"
-                                        + "          found: %d; current number of other types %d", name, superID,
-                                types.size());
+                                        + "          found: %d; current number of other types %d",
+                                name, superID, types.size());
                     else
                         superDef = (StoragePool<? super T, B>) types.get(superID - 1);
                 }
@@ -310,20 +312,14 @@ public abstract class FileParser<State extends SkillState> {
             // resize base pools and push entries to stack
             for (StoragePool<?, ?> p : resizeQueue) {
                 if (p instanceof BasePool<?>) {
-                    final Block last = p.blocks.getLast();
-                    ((BasePool<?>) p).resizeData((int) last.count);
+                    ((BasePool<?>) p).resizeData();
                 }
                 resizeStack.push(p);
             }
 
             // create instances from stack
             while (!resizeStack.isEmpty()) {
-                StoragePool<?, ?> p = resizeStack.pop();
-                final Block last = p.blocks.getLast();
-                int i = (int) last.bpo;
-                int high = (int) (last.bpo + last.count);
-                while (i < high && p.insertInstance(i + 1))
-                    i += 1;
+                resizeStack.pop().insertInstances();
             }
         }
 

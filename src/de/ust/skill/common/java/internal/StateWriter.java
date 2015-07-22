@@ -69,7 +69,7 @@ final public class StateWriter extends SerializationFunctions {
         }
 
         // write fields
-        ArrayList<Task<?>> data = new ArrayList<>();
+        ArrayList<Task> data = new ArrayList<>();
         long offset = 0L;
         for (FieldDeclaration<?, ?> f : fieldQueue) {
             StoragePool<?, ?> p = f.owner;
@@ -86,7 +86,7 @@ final public class StateWriter extends SerializationFunctions {
             // update chunks and prepare write data
             f.dataChunks.clear();
             f.dataChunks.add(new ChunkEntry(new BulkChunk(offset, end, p.size())));
-            data.add(new Task<>(f, offset, end));
+            data.add(new Task(f, offset, end));
             offset = end;
         }
 

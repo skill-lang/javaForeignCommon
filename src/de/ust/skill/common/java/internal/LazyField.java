@@ -52,7 +52,7 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
                     }
                 }
             } catch (BufferUnderflowException e) {
-                throw new PoolSizeMissmatchError(blockCounter, chunk.begin, chunk.end, this);
+                throw new PoolSizeMissmatchError(blockCounter, chunk.begin, chunk.end, this, e);
             }
             final long lastPosition = in.position();
             if (lastPosition - firstPosition != chunk.end - chunk.begin)

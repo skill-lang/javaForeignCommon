@@ -74,7 +74,7 @@ public class StringPool implements StringAccess {
         try {
             result = idMap.get((int) index);
         } catch (IndexOutOfBoundsException e) {
-            throw new InvalidPoolIndexException(index, stringPositions.size(), "string");
+            throw new InvalidPoolIndexException(index, stringPositions.size(), "string", e);
         }
         if (null != result)
             return result;

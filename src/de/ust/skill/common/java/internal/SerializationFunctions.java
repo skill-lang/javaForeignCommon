@@ -32,7 +32,7 @@ abstract public class SerializationFunctions {
     /**
      * Data structure used for parallel serialization scheduling
      */
-    protected static final class Task<B extends SkillObject> {
+    protected static final class Task {
         public final FieldDeclaration<?, ?> f;
         public final long begin;
         public final long end;
@@ -163,7 +163,7 @@ abstract public class SerializationFunctions {
         }
     }
 
-    protected final static void writeFieldData(SkillState state, FileOutputStream out, ArrayList<Task<?>> data)
+    protected final static void writeFieldData(SkillState state, FileOutputStream out, ArrayList<Task> data)
             throws IOException, InterruptedException {
 
         final Semaphore barrier = new Semaphore(0);
@@ -171,7 +171,7 @@ abstract public class SerializationFunctions {
         final ConcurrentLinkedQueue<SkillException> writeErrors = new ConcurrentLinkedQueue<SkillException>();
 
         long baseOffset = out.position();
-        for (Task<?> t : data) {
+        for (Task t : data) {
             final FieldDeclaration<?, ?> f = t.f;
             final MappedOutStream outMap = out.map(baseOffset, t.begin, t.end);
             // @note use semaphore instead of data.par, because map is not thread-safe
