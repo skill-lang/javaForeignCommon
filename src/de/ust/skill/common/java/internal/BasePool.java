@@ -61,10 +61,11 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
     }
 
     @Override
-    public T getByID(long index) {
-        if (0 == index)
+    final public T getByID(long ID) {
+        int index = (int) ID - 1;
+        if (ID < 0 || data.length <= ID)
             return null;
-        return data[(int) index - 1];
+        return data[index];
     }
 
     /**

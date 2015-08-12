@@ -437,7 +437,6 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
             f.addRestriction(r);
         dataFields.add(f);
         return f;
-
     }
 
     /**

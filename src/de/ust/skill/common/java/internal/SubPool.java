@@ -34,7 +34,7 @@ public class SubPool<T extends B, B extends SkillObject> extends StoragePool<T, 
 
     @SuppressWarnings("unchecked")
     @Override
-    public T getByID(long index) {
+    final public T getByID(long index) {
         return (T) basePool.getByID(index);
     }
 
