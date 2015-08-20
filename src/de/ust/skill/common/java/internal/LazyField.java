@@ -68,11 +68,11 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
     }
 
     @Override
-    public long offset(Block range) {
+    public long offset() {
         if (!isLoaded)
             load();
 
-        return super.offset(range);
+        return super.offset();
     }
 
     @Override

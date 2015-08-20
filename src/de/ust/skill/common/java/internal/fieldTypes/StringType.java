@@ -76,6 +76,6 @@ public final class StringType extends FieldType<String> implements
 
 	@Override
 	public String toString() {
-		return "annotation";
+        return "string";
 	}
 }

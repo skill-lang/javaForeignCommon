@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
-import java.util.function.ToIntFunction;
 
 import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantI16;
@@ -216,30 +215,4 @@ abstract public class SerializationFunctions {
             p.fixed(false);
         }
     }
-
-    /**
-     * creates an lbpo map by recursively adding the local base pool offset to the map and adding all sub pools
-     * afterwards TODO remove size function, because there are only two cases!
-     */
-    protected final static int makeLBPOMap(StoragePool<?, ?> p, int[] lbpoMap, int next,
-            ToIntFunction<StoragePool<?, ?>> size) {
-        lbpoMap[p.typeID - 32] = next;
-        int result = next + size.applyAsInt(p);
-        for (SubPool<?, ?> sub : p.subPools) {
-            result = makeLBPOMap(sub, lbpoMap, result, size);
-        }
-        return result;
-    }
-    //
-    // /**
-    // * concatenates array buffers in the d-map. This will in fact turn the d-map from a map pointing from names to
-    // static
-    // * instances into a map pointing from names to dynamic instances.
-    // */
-    // final def concatenateDataMap[T <: B, B <: SkillType](pool : StoragePool[T, B], data : HashMap[String,
-    // ArrayBuffer[SkillType]]) : Unit = for (sub ← pool.subPools) {
-    // data(pool.basePool.name) ++= data(sub.name)
-    // data(sub.name) = data(pool.basePool.name)
-    // concatenateDataMap(sub, data)
-    // }
 }

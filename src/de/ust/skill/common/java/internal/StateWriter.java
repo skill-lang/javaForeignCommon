@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import de.ust.skill.common.java.internal.FieldDeclaration.ChunkEntry;
+import de.ust.skill.common.java.internal.SerializationFunctions.Task;
 import de.ust.skill.common.java.internal.parts.BulkChunk;
 import de.ust.skill.common.jvm.streams.FileOutputStream;
 
@@ -40,12 +41,7 @@ final public class StateWriter extends SerializationFunctions {
         for (final StoragePool<?, ?> p : state.types) {
             HashMap<FieldDeclaration<?, ?>, Future<Long>> vs = new HashMap<>();
             for (final FieldDeclaration<?, ?> f : p.dataFields)
-                vs.put(f, SkillState.pool.submit(new Callable<Long>() {
-                    @Override
-                    public Long call() throws Exception {
-                        return f.offset(p.blocks.getLast());
-                    }
-                }));
+                vs.put(f, SkillState.pool.submit((Callable<Long>) f::offset));
             offsets.put(p, vs);
         }
 

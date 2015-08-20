@@ -5,7 +5,6 @@ import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
-import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.jvm.streams.MappedInStream;
 import de.ust.skill.common.jvm.streams.MappedOutStream;
@@ -26,7 +25,7 @@ public abstract class AutoField<T, Obj extends SkillObject> extends FieldDeclara
     }
 
     @Override
-    public final long offset(Block range) {
+    public final long offset() {
         throw new NoSuchMethodError("one get the offset of an auto fields!");
     }
 

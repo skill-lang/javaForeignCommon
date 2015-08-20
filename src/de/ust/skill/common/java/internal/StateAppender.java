@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
+import de.ust.skill.common.java.internal.SerializationFunctions.Task;
 import de.ust.skill.common.java.internal.parts.BulkChunk;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.jvm.streams.FileOutputStream;
@@ -21,8 +22,8 @@ import de.ust.skill.common.jvm.streams.FileOutputStream;
  */
 final public class StateAppender extends SerializationFunctions {
 
-    public StateAppender(SkillState state, FileOutputStream out) throws IOException, InterruptedException,
-            ExecutionException {
+    public StateAppender(SkillState state, FileOutputStream out)
+            throws IOException, InterruptedException, ExecutionException {
         super(state);
 
         // save the index of the first new pool
@@ -86,7 +87,7 @@ final public class StateAppender extends SerializationFunctions {
             offsets.put(p, new HashMap<>());
 
         for (final FieldDeclaration<?, ?> f : chunkMap.keySet()) {
-            final FutureTask<Long> v = new FutureTask<>((Callable<Long>) (() -> f.offset(f.owner.blocks.getLast())));
+            final FutureTask<Long> v = new FutureTask<>((Callable<Long>) f::offset);
             SkillState.pool.execute(v);
             offsets.get(f.owner).put(f, v);
         }

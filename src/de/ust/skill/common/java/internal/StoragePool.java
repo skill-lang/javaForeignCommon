@@ -136,6 +136,13 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     }
 
     /**
+     * internal use only!
+     */
+    public Block lastBlock() {
+        return blocks.getLast();
+    }
+
+    /**
      * All stored objects, which have exactly the type T. Objects are stored as arrays of field entries. The types of
      * the respective fields can be retrieved using the fieldTypes map.
      */
