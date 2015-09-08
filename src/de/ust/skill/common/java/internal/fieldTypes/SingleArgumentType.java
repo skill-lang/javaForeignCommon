@@ -21,10 +21,14 @@ public abstract class SingleArgumentType<T extends Collection<Base>, Base> exten
 
     @Override
     public long calculateOffset(Collection<T> xs) {
-                long result = 0L;
+        long result = 0L;
         for (T x : xs) {
-            result += V64.singleV64Offset(x.size());
-            result += groundType.calculateOffset(x);
+            if (null == x)
+                result += 1;
+            else {
+                result += V64.singleV64Offset(x.size());
+                result += groundType.calculateOffset(x);
+            }
         }
 
         return result;
@@ -32,8 +36,12 @@ public abstract class SingleArgumentType<T extends Collection<Base>, Base> exten
 
     @Override
     public void writeSingleField(T elements, OutStream out) throws IOException {
-        out.v64(elements.size());
-        for (Base e : elements)
-            groundType.writeSingleField(e, out);
+        if (null == elements) {
+            out.i8((byte) 0);
+        } else {
+            out.v64(elements.size());
+            for (Base e : elements)
+                groundType.writeSingleField(e, out);
+        }
     }
 }

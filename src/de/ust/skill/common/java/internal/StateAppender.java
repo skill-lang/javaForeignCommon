@@ -10,7 +10,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import de.ust.skill.common.java.internal.SerializationFunctions.Task;
 import de.ust.skill.common.java.internal.parts.BulkChunk;
 import de.ust.skill.common.java.internal.parts.Chunk;
 import de.ust.skill.common.jvm.streams.FileOutputStream;
@@ -78,9 +77,6 @@ final public class StateAppender extends SerializationFunctions {
         // write string block
         state.strings.prepareAndAppend(out, this);
 
-        // write count of the type block
-        out.v64(rPools.size());
-
         // calculate offsets for relevant fields
         final HashMap<StoragePool<?, ?>, HashMap<FieldDeclaration<?, ?>, Future<Long>>> offsets = new HashMap<>();
         for (StoragePool<?, ?> p : rPools)
@@ -91,6 +87,9 @@ final public class StateAppender extends SerializationFunctions {
             SkillState.pool.execute(v);
             offsets.get(f.owner).put(f, v);
         }
+
+        // write count of the type block
+        out.v64(rPools.size());
 
         // write headers
         final ArrayList<ArrayList<FieldDeclaration<?, ?>>> fieldQueue = new ArrayList<>();
@@ -114,9 +113,11 @@ final public class StateAppender extends SerializationFunctions {
                         out.i8((byte) 0);
                     } else {
                         out.v64(p.superPool.typeID - 31);
-                        out.v64(lbpoMap[p.typeID - 32]);
+                        if (0 != count)
+                            out.v64(lbpoMap[p.typeID - 32]);
+
                     }
-                } else if (null != p.superName()) {
+                } else if (null != p.superName() && 0 != count) {
                     out.v64(lbpoMap[p.typeID - 32]);
                 }
 

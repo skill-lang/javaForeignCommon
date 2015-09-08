@@ -54,6 +54,9 @@ public abstract class FileParser<State extends SkillState> {
     protected int blockCounter = 0;
     protected HashSet<String> seenTypes = new HashSet<>();
 
+    // this barrier is strictly increasing inside of each block and reset to 0 at the beginning of each block
+    protected int blockIDBarrier = 0;
+
     // strings
     protected final StringPool Strings;
 
@@ -279,6 +282,12 @@ public abstract class FileParser<State extends SkillState> {
                 // allocate pool
                 definition = newPool(name, superDef, rest);
             }
+            if (blockIDBarrier < definition.typeID)
+                blockIDBarrier = definition.typeID;
+            else
+                throw new ParseException(in, blockCounter, null,
+                        "Found unordered type block. Type %s has id %i, barrier was %i.", name, definition.typeID,
+                        blockIDBarrier);
 
             final long bpo = definition.basePool.data.length
                     + ((0L != count && null != definition.superPool) ? in.v64() : 0L);
@@ -296,6 +305,7 @@ public abstract class FileParser<State extends SkillState> {
     final protected void typeBlock() {
         // reset counters and queues
         seenTypes.clear();
+        blockIDBarrier = 0;
         resizeQueue.clear();
         localFields.clear();
         fieldDataQueue.clear();
