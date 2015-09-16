@@ -17,7 +17,7 @@ import de.ust.skill.common.jvm.streams.OutStream;
  * 
  * @author Timm Felden
  */
-public final class Annotation extends FieldType<SkillObject> implements ReferenceType {
+public final class Annotation extends FieldType<SkillObject>implements ReferenceType {
 
     private final ArrayList<StoragePool<?, ?>> types;
     private HashMap<String, StoragePool<?, ?>> typeByName = null;
@@ -59,8 +59,8 @@ public final class Annotation extends FieldType<SkillObject> implements Referenc
                 if (ref instanceof NamedType)
                     result += V64.singleV64Offset(((NamedType) ref).τPool().typeID() - 31);
                 else
-                    result += V64
-                            .singleV64Offset(typeByName.get(ref.getClass().getSimpleName().toLowerCase()).typeID() - 31);
+                    result += V64.singleV64Offset(
+                            typeByName.get(ref.getClass().getSimpleName().toLowerCase()).typeID() - 31);
 
                 result += V64.singleV64Offset(ref.getSkillID());
             }
@@ -104,5 +104,12 @@ public final class Annotation extends FieldType<SkillObject> implements Referenc
     @Override
     public String toString() {
         return "annotation";
+    }
+
+    /**
+     * required for proper treatment of Interface types (because Java can not have interfaces inherit from classes)
+     */
+    public static <T> Annotation cast(FieldType<T> f) {
+        return (Annotation) f;
     }
 }
