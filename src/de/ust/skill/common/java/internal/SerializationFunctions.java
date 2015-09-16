@@ -68,6 +68,12 @@ abstract public class SerializationFunctions {
                     for (SkillObject i : p)
                         strings.add((String) i.get(f));
                 }
+
+                /**
+                 * ensure that lazy fields have been loaded
+                 */
+                if (f instanceof LazyField<?, ?>)
+                    ((LazyField<?, ?>) f).ensureLoaded();
             }
         }
 
@@ -108,40 +114,40 @@ abstract public class SerializationFunctions {
             out.i8(((ConstantI8) t).value);
             return;
 
-            // case ConstantI16(v) ⇒
+        // case ConstantI16(v) ⇒
         case 1:
             out.i8((byte) 1);
             out.i16(((ConstantI16) t).value);
             return;
 
-            // case ConstantI32(v) ⇒
+        // case ConstantI32(v) ⇒
         case 2:
             out.i8((byte) 2);
             out.i32(((ConstantI32) t).value);
             return;
 
-            // case ConstantI64(v) ⇒
+        // case ConstantI64(v) ⇒
         case 3:
             out.i8((byte) 3);
             out.i64(((ConstantI64) t).value);
             return;
 
-            // case ConstantV64(v) ⇒
+        // case ConstantV64(v) ⇒
         case 4:
             out.i8((byte) 4);
             out.v64(((ConstantV64) t).value);
             return;
 
-            // case ConstantLengthArray(l, t) ⇒
+        // case ConstantLengthArray(l, t) ⇒
         case 15:
             out.i8((byte) 0x0F);
             out.v64(((ConstantLengthArray<?>) t).length);
             out.v64(((SingleArgumentType<?, ?>) t).groundType.typeID);
             return;
 
-            // case VariableLengthArray(t) ⇒
-            // case ListType(t) ⇒
-            // case SetType(t) ⇒
+        // case VariableLengthArray(t) ⇒
+        // case ListType(t) ⇒
+        // case SetType(t) ⇒
         case 17:
         case 18:
         case 19:
@@ -149,7 +155,7 @@ abstract public class SerializationFunctions {
             out.v64(((SingleArgumentType<?, ?>) t).groundType.typeID);
             return;
 
-            // case MapType(k, v) ⇒
+        // case MapType(k, v) ⇒
         case 20:
             out.i8((byte) 0x14);
             writeType(((MapType<?, ?>) t).keyType, out);
@@ -185,7 +191,8 @@ abstract public class SerializationFunctions {
                     } catch (IOException e) {
                         writeErrors.add(new SkillException("failed to write field " + f.toString(), e));
                     } catch (Throwable e) {
-                        writeErrors.add(new SkillException("unexpected failure while writing field " + f.toString(), e));
+                        writeErrors
+                                .add(new SkillException("unexpected failure while writing field " + f.toString(), e));
                     } finally {
                         // ensure that writer can terminate, errors will be printed to command line anyway, and we wont
                         // be able to recover, because errors can only happen if the skill implementation itself is

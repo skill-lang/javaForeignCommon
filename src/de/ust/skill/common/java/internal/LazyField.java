@@ -62,6 +62,12 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
         isLoaded = true;
     }
 
+    // required to ensure that data is present before state reorganization
+    void ensureLoaded() {
+        if (!isLoaded)
+            load();
+    }
+
     @Override
     public void read(MappedInStream in, Chunk last) {
         // deferred

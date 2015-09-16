@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillException;
-import de.ust.skill.common.java.internal.FieldDeclaration.ChunkEntry;
 import de.ust.skill.common.java.internal.SkillState.ReadBarrier;
 import de.ust.skill.common.java.internal.fieldDeclarations.IgnoredField;
 import de.ust.skill.common.java.internal.parts.Chunk;
