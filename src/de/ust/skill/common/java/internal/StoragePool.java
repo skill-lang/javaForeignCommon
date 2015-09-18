@@ -518,4 +518,9 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         newObjects.clear();
         newObjects.trimToSize();
     }
+
+    @Override
+    final public String toString() {
+        return name;
+    }
 }
