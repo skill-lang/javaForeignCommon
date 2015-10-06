@@ -52,7 +52,7 @@ public class DistributedField<T, Obj extends SkillObject> extends FieldDeclarati
         }
         final long lastPosition = in.position();
         if (lastPosition - firstPosition != last.end - last.begin)
-            throw new PoolSizeMissmatchError(dataChunks.size() - 1, last.begin, last.end, this);
+            throw new PoolSizeMissmatchError(dataChunks.size() - 1, in.position(), last.begin, last.end, this);
 
     }
 

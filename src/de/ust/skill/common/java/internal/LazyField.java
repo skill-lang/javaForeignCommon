@@ -56,7 +56,7 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
             }
             final long lastPosition = in.position();
             if (lastPosition - firstPosition != chunk.end - chunk.begin)
-                throw new PoolSizeMissmatchError(blockCounter, chunk.begin, chunk.end, this);
+                throw new PoolSizeMissmatchError(blockCounter, in.position(), chunk.begin, chunk.end, this);
         }
 
         isLoaded = true;

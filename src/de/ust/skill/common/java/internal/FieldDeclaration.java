@@ -206,7 +206,8 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
                         f.read(map, last);
                         // map was not consumed
                         if (!map.eof() && !(f instanceof LazyField<?, ?> || f instanceof IgnoredField))
-                            readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f));
+                            readErrors.add(
+                                    new PoolSizeMissmatchError(blockCounter, map.position(), last.begin, last.end, f));
                     } catch (BufferUnderflowException e) {
                         readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f, e));
                     } catch (SkillException t) {
