@@ -1,6 +1,5 @@
 package de.ust.skill.common.java.internal;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -390,12 +389,7 @@ public abstract class FileParser<State extends SkillState> {
             final FieldDeclaration<?, ?> f = e.owner.dataFields.get(e.fieldID - 1);
 
             // make begin/end absolute
-            final long end;
-            try {
-                end = f.addOffsetToLastChunk(in, fileOffset);
-            } catch (IOException e1) {
-                throw new Error(e1);
-            }
+            final long end = f.addOffsetToLastChunk(in, fileOffset);
             dataEnd = Math.max(dataEnd, end);
         }
         in.jump(dataEnd);

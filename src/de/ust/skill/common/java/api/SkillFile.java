@@ -18,7 +18,7 @@ public interface SkillFile {
      * @author Timm Felden
      */
     public static enum Mode {
-        Create, Read, Write, Append;
+        Create, Read, Write, Append, ReadOnly;
     }
 
     /**
@@ -54,6 +54,14 @@ public interface SkillFile {
                     else if (closeMode != m)
                         throw new IOException("You can either write or append to a file.");
                     break;
+                case ReadOnly:
+                    if (null == closeMode)
+                        closeMode = m;
+                    else if (closeMode != m)
+                        throw new IOException("You cannot combine ReadOnly with another write mode.");
+                    break;
+                default:
+                    break;
                 }
             if (null == openMode)
                 openMode = Mode.Read;
@@ -68,17 +76,22 @@ public interface SkillFile {
     /**
      * @return access to known strings
      */
-    public StringAccess Strings();
+    public abstract StringAccess Strings();
+
+    /**
+     * ensure that the argument instance will be deleted on next flush
+     */
+    public abstract void delete(SkillObject target);
 
     /**
      * @return iterator over all user types
      */
-    public Iterable<? extends Access<? extends SkillObject>> allTypes();
+    public abstract Iterable<? extends Access<? extends SkillObject>> allTypes();
 
     /**
      * @return stream over all user types
      */
-    public Stream<? extends Access<? extends SkillObject>> allTypesStream();
+    public abstract Stream<? extends Access<? extends SkillObject>> allTypesStream();
 
     /**
      * Set a new path for the file. This will influence the next flush/close operation.
@@ -87,14 +100,19 @@ public interface SkillFile {
      *             if new path can not be used for some reason
      * @note (on implementation) memory maps for lazy evaluation must have been created before invocation of this method
      */
-    public void changePath(Path path) throws IOException;
+    public abstract void changePath(Path path) throws IOException;
+
+    /**
+     * @return the current path pointing to the file
+     */
+    public abstract Path currentPath();
 
     /**
      * Set a new mode.
      * 
      * @note not fully implemented
      */
-    public void changeMode(Mode writeMode);
+    public abstract void changeMode(Mode writeMode);
 
     /**
      * Checks consistency of the current state of the file.
@@ -104,7 +122,7 @@ public interface SkillFile {
      * @throws SkillException
      *             if an inconsistency is found
      */
-    public void check() throws SkillException;
+    public abstract void check() throws SkillException;
 
     /**
      * Check consistency and write changes to disk.
@@ -114,10 +132,10 @@ public interface SkillFile {
      * @throws SkillException
      *             if check fails
      */
-    public void flush() throws SkillException;
+    public abstract void flush() throws SkillException;
 
     /**
      * Same as flush, but will also sync and close file, thus the state must not be used afterwards.
      */
-    public void close() throws SkillException;
+    public abstract void close() throws SkillException;
 }

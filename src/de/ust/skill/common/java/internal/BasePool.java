@@ -113,16 +113,38 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      * compress new instances into the data array and update skillIDs
      */
     final void compress(int[] lbpoMap) {
+        // fix to calculate correct size in acceptable time
+        fixed(true);
+
+        // create our part of the lbpo map
+        makeLBPOMap(this, lbpoMap, 0);
+
+        // from now on, size will take deleted objects into account, thus d may in fact be smaller then data!
         T[] d = newArray(size());
         int p = 0;
         Iterator<T> is = typeOrderIterator();
         while (is.hasNext()) {
             final T i = is.next();
-            d[p++] = i;
-            i.setSkillID(p);
+            if (i.skillID != 0) {
+                d[p++] = i;
+                i.setSkillID(p);
+            }
         }
         data = d;
         updateAfterCompress(lbpoMap);
+    }
+
+    /**
+     * creates an lbpo map by recursively adding the local base pool offset to the map and adding all sub pools
+     * afterwards
+     */
+    private final static int makeLBPOMap(StoragePool<?, ?> p, int[] lbpoMap, int next) {
+        lbpoMap[p.typeID - 32] = next;
+        int result = next + p.staticSize() - p.deletedCount;
+        for (SubPool<?, ?> sub : p.subPools) {
+            result = makeLBPOMap(sub, lbpoMap, result);
+        }
+        return result;
     }
 
     final void prepareAppend(Map<FieldDeclaration<?, ?>, Chunk> chunkMap) {

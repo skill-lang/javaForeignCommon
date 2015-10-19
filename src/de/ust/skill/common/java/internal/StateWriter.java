@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import de.ust.skill.common.java.internal.FieldDeclaration.ChunkEntry;
+import de.ust.skill.common.java.internal.SerializationFunctions.Task;
 import de.ust.skill.common.java.internal.parts.BulkChunk;
 import de.ust.skill.common.jvm.streams.FileOutputStream;
 
@@ -20,9 +21,7 @@ final public class StateWriter extends SerializationFunctions {
         final int[] lbpoMap = new int[state.types.size()];
         state.types.stream().parallel().forEach(p -> {
             if (p instanceof BasePool<?>) {
-                makeLBPOMap(p, lbpoMap, 0);
                 ((BasePool<?>) p).compress(lbpoMap);
-                p.fixed(true);
             }
         });
 
@@ -86,18 +85,5 @@ final public class StateWriter extends SerializationFunctions {
         }
 
         writeFieldData(state, out, data);
-    }
-
-    /**
-     * creates an lbpo map by recursively adding the local base pool offset to the map and adding all sub pools
-     * afterwards
-     */
-    private final static int makeLBPOMap(StoragePool<?, ?> p, int[] lbpoMap, int next) {
-        lbpoMap[p.typeID - 32] = next;
-        int result = next + p.staticSize();
-        for (SubPool<?, ?> sub : p.subPools) {
-            result = makeLBPOMap(sub, lbpoMap, result);
-        }
-        return result;
     }
 }

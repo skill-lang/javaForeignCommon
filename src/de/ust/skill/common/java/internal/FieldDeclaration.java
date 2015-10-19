@@ -143,7 +143,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      * 
      * @return the end of this chunk
      */
-    final long addOffsetToLastChunk(FileInputStream in, long offset) throws IOException {
+    final long addOffsetToLastChunk(FileInputStream in, long offset) {
         Chunk c = dataChunks.getLast().c;
         c.begin += offset;
         c.end += offset;

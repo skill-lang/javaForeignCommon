@@ -38,6 +38,11 @@ public abstract class SkillState implements SkillFile {
     private Path path;
 
     /**
+     * dirty flag used to prevent append after delete operations
+     */
+    private boolean dirty = false;
+
+    /**
      * This pool is used for all asynchronous (de)serialization operations.
      */
     static ExecutorService pool = Executors.newCachedThreadPool(new ThreadFactory() {
@@ -144,6 +149,14 @@ public abstract class SkillState implements SkillFile {
     }
 
     @Override
+    final public void delete(SkillObject target) {
+        if (null != target) {
+            dirty |= target.skillID > 0;
+            poolByName().get(target.skillName()).delete(target);
+        }
+    }
+
+    @Override
     final public void changePath(Path path) throws IOException {
         switch (writeMode) {
         case Write:
@@ -164,6 +177,11 @@ public abstract class SkillState implements SkillFile {
     }
 
     @Override
+    final public Path currentPath() {
+        return path;
+    }
+
+    @Override
     final public void changeMode(Mode writeMode) {
         // pointless
         if (this.writeMode == writeMode)
@@ -176,6 +194,8 @@ public abstract class SkillState implements SkillFile {
             // write -> append
             throw new IllegalArgumentException(
                     "Cannot change write mode from Write to Append, try to use open(<path>, Create, Append) instead.");
+        case ReadOnly:
+            throw new IllegalArgumentException("Cannot change from read only, to a write mode.");
 
         default:
             // dead, if not used by DAUs
@@ -193,8 +213,8 @@ public abstract class SkillState implements SkillFile {
                 try {
                     f.check();
                 } catch (SkillException e) {
-                    throw new SkillException(String.format("check failed in %s.%s:\n  %s", p.name, f.name,
-                            e.getMessage()), e);
+                    throw new SkillException(
+                            String.format("check failed in %s.%s:\n  %s", p.name, f.name, e.getMessage()), e);
                 }
 
     }
@@ -208,8 +228,17 @@ public abstract class SkillState implements SkillFile {
                 return;
 
             case Append:
-                new StateAppender(this, FileOutputStream.append(path));
+                // dirty appends will automatically become writes
+                if (dirty) {
+                    changeMode(Mode.Write);
+                    new StateWriter(this, FileOutputStream.write(path));
+                } else
+                    new StateAppender(this, FileOutputStream.append(path));
                 return;
+
+            case ReadOnly:
+                throw new SkillException("Cannot flush a read only file. Note: close will turn a file into read only.");
+
             default:
                 // dead
                 break;
@@ -226,8 +255,7 @@ public abstract class SkillState implements SkillFile {
     @Override
     public void close() throws SkillException {
         flush();
-        // TODO invalidate state?
-
+        this.writeMode = Mode.ReadOnly;
     }
 
     /**

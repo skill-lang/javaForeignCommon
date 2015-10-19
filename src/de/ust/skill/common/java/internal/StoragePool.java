@@ -37,8 +37,8 @@ import de.ust.skill.common.jvm.streams.OutStream;
  * @note We do not guarantee functional correctness if instances from multiple skill files are mixed. Such usage will
  *       likely break at least one of the files.
  */
-abstract public class StoragePool<T extends B, B extends SkillObject> extends FieldType<T> implements Access<T>,
-        ReferenceType {
+abstract public class StoragePool<T extends B, B extends SkillObject> extends FieldType<T>
+        implements Access<T>, ReferenceType {
 
     /**
      * Builder for new instances of the pool.
@@ -206,6 +206,11 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     int cachedSize;
 
     /**
+     * number of deleted objects in this state
+     */
+    protected int deletedCount = 0;
+
+    /**
      * !!internal use only!!
      */
     public final boolean fixed() {
@@ -214,19 +219,19 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     /**
      * set new fixation status; if setting fails, some sub pools may have been fixed nonetheless.
+     * 
+     * @note this may change the result of size(), because from now on, the deleted objects will be taken into account
      */
     public final void fixed(boolean newStatus) {
         if (fixed == newStatus)
             return;
 
         if (newStatus) {
-            if (0 != newObjects.size())
-                throw new IllegalStateException("can not fix a pool that contains new objects");
-
             for (SubPool<?, B> s : subPools)
                 s.fixed(true);
 
-            cachedSize = size();
+            // take deletions into account
+            cachedSize = size() - deletedCount;
 
         } else {
             if (null != superPool)
@@ -352,9 +357,28 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
         return newObjects.add(e);
     }
 
+    /**
+     * Delete shall only be called from skill state
+     * 
+     * @param target
+     *            the object to be deleted
+     * @note we type target using the erasure directly, because the Java type system is too weak to express correct
+     *       typing, when taking the pool from a map
+     */
+    final void delete(SkillObject target) {
+        if (!target.isDeleted()) {
+            target.skillID = 0;
+            deletedCount++;
+        }
+    }
+
     @Override
     public boolean remove(Object o) {
-        throw new Error("TODO");
+        if (o instanceof SkillObject) {
+            owner().delete((SkillObject) o);
+            return true;
+        }
+        return false;
     }
 
     @Override

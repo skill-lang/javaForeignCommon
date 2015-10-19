@@ -6,11 +6,9 @@ package de.ust.skill.common.java.internal;
  * 
  * @author Timm Felden
  * @note This type definition is in internal, because we have to protect setSkillID from the user
- * @param <This>
- *            this.type
  */
 // TODO create a builder for skill objects
-public class SkillObject {
+public abstract class SkillObject {
 
     /**
      * The constructor is protected to ensure that users do not break states accidentally
@@ -20,18 +18,16 @@ public class SkillObject {
     }
 
     /**
+     * @return the skill name of this type
+     */
+    public abstract String skillName();
+
+    /**
      * -1 for new objects<br>
      * 0 for deleted objects<br>
      * everything else is the ID of an object inside of a file
      */
     protected long skillID;
-
-    /**
-     * create a delete mark, thus pointers to this instance will be replaced by null a pointer on flush
-     */
-    public void delete() {
-        skillID = 0;
-    }
 
     /**
      * @return whether the object has been deleted
@@ -100,13 +96,13 @@ public class SkillObject {
         }
 
         @Override
-        public String τName() {
-            return τPool.name;
+        public String toString() {
+            return skillName() + "#" + skillID;
         }
 
         @Override
-        public String toString() {
-            return τName() + "#" + skillID;
+        public String skillName() {
+            return τPool.name;
         }
     }
 }
