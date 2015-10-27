@@ -23,9 +23,9 @@ public class StringPool implements StringAccess {
     final private FileInputStream input;
 
     /**
-     * the set of new strings, i.e. strings which do not have an ID
+     * the set of all known strings, i.e. strings which do not have an ID as well as strings that already have one
      */
-    private final HashSet<String> newStrings = new HashSet<>();
+    private final HashSet<String> knownStrings = new HashSet<>();
 
     /**
      * ID ⇀ (absolute offset, length) will be used if idMap contains a null reference
@@ -33,6 +33,11 @@ public class StringPool implements StringAccess {
      * @note there is a fake entry at ID 0
      */
     final ArrayList<Position> stringPositions;
+
+    /**
+     * number of strings loaded; required for correct size calculation
+     */
+    private int stringsLoaded = 0;
 
     final static class Position {
         public Position(long l, int i) {
@@ -62,7 +67,7 @@ public class StringPool implements StringAccess {
 
     @Override
     public int size() {
-        return stringPositions.size() + newStrings.size();
+        return stringPositions.size() - stringsLoaded + knownStrings.size();
     }
 
     @Override
@@ -97,6 +102,8 @@ public class StringPool implements StringAccess {
                 e.printStackTrace();
             }
             idMap.set((int) index, result);
+            knownStrings.add(result);
+            stringsLoaded++;
         }
         return result;
     }
@@ -116,7 +123,7 @@ public class StringPool implements StringAccess {
 
         // instert new strings to the map;
         // this is the place where duplications with lazy strings will be detected and eliminated
-        for (String s : newStrings) {
+        for (String s : knownStrings) {
             if (!serializationIDs.containsKey(s)) {
                 serializationIDs.put(s, idMap.size());
                 idMap.add(s);
@@ -162,10 +169,10 @@ public class StringPool implements StringAccess {
 
         ArrayList<byte[]> todo = new ArrayList<byte[]>();
 
-        // instert new strings to the map;
+        // Insert new strings to the map;
         // this is the place where duplications with lazy strings will be detected and eliminated
         // this is also the place, where new instances are appended to the output file
-        for (String s : newStrings) {
+        for (String s : knownStrings) {
             if (!serializationIDs.containsKey(s)) {
                 serializationIDs.put(s, idMap.size());
                 idMap.add(s);
@@ -199,68 +206,58 @@ public class StringPool implements StringAccess {
 
     @Override
     public boolean contains(Object o) {
-        // TODO Auto-generated method stub
-        return false;
+        return knownStrings.contains(o);
     }
 
     @Override
     public Iterator<String> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return knownStrings.iterator();
     }
 
     @Override
     public Object[] toArray() {
-        // TODO Auto-generated method stub
-        return null;
+        return knownStrings.toArray();
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        // TODO Auto-generated method stub
-        return null;
+        return knownStrings.toArray(a);
     }
 
     @Override
     public boolean add(String e) {
         if (e != null)
-            return newStrings.add(e);
+            return knownStrings.add(e);
         return false;
     }
 
     @Override
     public boolean remove(Object o) {
-        // TODO Auto-generated method stub
-        return false;
+        return knownStrings.remove(o);
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        // TODO Auto-generated method stub
-        return false;
+        return knownStrings.containsAll(c);
     }
 
     @Override
     public boolean addAll(Collection<? extends String> c) {
-        // TODO Auto-generated method stub
-        return false;
+        return knownStrings.addAll(c);
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        // TODO Auto-generated method stub
-        return false;
+        return knownStrings.removeAll(c);
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        // TODO Auto-generated method stub
-        return false;
+        return knownStrings.retainAll(c);
     }
 
     @Override
     public void clear() {
-        // TODO Auto-generated method stub
-
+        knownStrings.clear();
     }
 }
