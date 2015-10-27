@@ -2,6 +2,7 @@ package de.ust.skill.common.java.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
@@ -15,7 +16,6 @@ import de.ust.skill.common.java.internal.fieldTypes.ConstantLengthArray;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantV64;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
-import de.ust.skill.common.java.internal.fieldTypes.StringType;
 import de.ust.skill.common.jvm.streams.FileOutputStream;
 import de.ust.skill.common.jvm.streams.MappedOutStream;
 import de.ust.skill.common.jvm.streams.OutStream;
@@ -64,9 +64,31 @@ abstract public class SerializationFunctions {
             for (FieldDeclaration<?, ?> f : p.dataFields) {
 
                 strings.add(f.name);
-                if (f.type instanceof StringType) {
+                // collect strings
+                switch (f.type.typeID) {
+                // string
+                case 14:
                     for (SkillObject i : p)
                         strings.add((String) i.get(f));
+                    break;
+
+                // container<string>
+                case 15:
+                case 17:
+                case 18:
+                case 19:
+                    if (((SingleArgumentType<?, ?>) (f.type)).groundType.typeID == 14) {
+                        for (SkillObject i : p) {
+                            @SuppressWarnings("unchecked")
+                            Collection<String> xs = (Collection<String>) i.get(f);
+                            for (String s : xs)
+                                strings.add(s);
+                        }
+                    }
+                    break;
+
+                default:
+                    // nothing important
                 }
 
                 /**
