@@ -481,8 +481,8 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
     /**
      * used internally for type forest construction
      */
-    public <S extends T> StoragePool<S, B> makeSubPool(int index, String name) {
-        return new SubPool<S, B>(index, name, this, Collections.emptySet(), noAutoFields());
+    public StoragePool<? extends T, B> makeSubPool(int index, String name) {
+        return new SubPool<>(index, name, this, Collections.emptySet(), noAutoFields());
     }
 
     /**
