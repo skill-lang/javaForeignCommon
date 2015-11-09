@@ -190,17 +190,17 @@ abstract public class SerializationFunctions {
         }
     }
 
-    protected final static void writeFieldData(SkillState state, FileOutputStream out, ArrayList<Task> data)
+    protected final static void writeFieldData(SkillState state, FileOutputStream out, ArrayList<Task> data, int offset)
             throws IOException, InterruptedException {
 
         final Semaphore barrier = new Semaphore(0);
         // async reads will post their errors in this queue
         final ConcurrentLinkedQueue<SkillException> writeErrors = new ConcurrentLinkedQueue<SkillException>();
 
-        long baseOffset = out.position();
+        MappedOutStream writeMap = out.mapBlock(offset);
         for (Task t : data) {
             final FieldDeclaration<?, ?> f = t.f;
-            final MappedOutStream outMap = out.map(baseOffset, t.begin, t.end);
+            final MappedOutStream outMap = writeMap.clone((int) t.begin, (int) t.end);
             // @note use semaphore instead of data.par, because map is not thread-safe
             SkillState.pool.execute(new Runnable() {
 
@@ -225,6 +225,7 @@ abstract public class SerializationFunctions {
             });
         }
         barrier.acquire(data.size());
+        writeMap.close();
         out.close();
 
         // report errors

@@ -153,7 +153,7 @@ final public class StateAppender extends SerializationFunctions {
             }
         }
 
-        writeFieldData(state, out, data);
+        writeFieldData(state, out, data, (int) offset);
     }
 
     /**
