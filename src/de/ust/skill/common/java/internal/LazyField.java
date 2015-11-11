@@ -30,6 +30,7 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
             blockCounter++;
             Chunk chunk = ce.c;
             MappedInStream in = ce.in;
+            ce.in = null;
             final long firstPosition = in.position();
             try {
                 if (chunk instanceof SimpleChunk) {

@@ -2,6 +2,7 @@ package de.ust.skill.common.java.internal;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -341,12 +342,23 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
     @Override
     public Object[] toArray() {
-        throw new Error("TODO");
+        final Object[] rval = new Object[size()];
+        Iterator<T> is = iterator();
+        for (int i = 0; i < rval.length; i++) {
+            rval[i] = is.next();
+        }
+        return rval;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <U> U[] toArray(U[] a) {
-        throw new Error("TODO");
+        final U[] rval = Arrays.copyOf(a, size());
+        Iterator<T> is = iterator();
+        for (int i = 0; i < rval.length; i++) {
+            rval[i] = (U) is.next();
+        }
+        return rval;
     }
 
     @Override

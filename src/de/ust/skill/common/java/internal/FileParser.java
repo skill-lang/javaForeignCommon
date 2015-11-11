@@ -244,7 +244,13 @@ public abstract class FileParser<State extends SkillState> {
     @SuppressWarnings("unchecked")
     private <B extends SkillObject, T extends B> void typeDefinition() {
         // read type part
-        final String name = Strings.get(in.v64());
+        final String name;
+        try {
+            final String n = Strings.get(in.v64());
+            name = n;
+        } catch (InvalidPoolIndexException e) {
+            throw new ParseException(in, blockCounter, e, "corrupted type header");
+        }
         if (null == name)
             throw new ParseException(in, blockCounter, null, "corrupted file: nullptr in typename");
 

@@ -3,6 +3,7 @@ package de.ust.skill.common.java.internal;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import de.ust.skill.common.jvm.streams.FileOutputStream;
  *       an O(1) operation and Strings are loaded from file lazily.
  */
 public class StringPool implements StringAccess {
-    final private FileInputStream input;
+    private FileInputStream input;
 
     /**
      * the set of all known strings, i.e. strings which do not have an ID as well as strings that already have one
@@ -111,10 +112,7 @@ public class StringPool implements StringAccess {
     public void prepareAndWrite(FileOutputStream out, StateWriter ws) throws IOException {
         HashMap<String, Integer> serializationIDs = ws.stringIDs;
 
-        // ensure all strings are present
-        for (int i = 1; i < stringPositions.size(); i++) {
-            get(i);
-        }
+        ensureStrings();
 
         // create inverse map
         for (int i = 1; i < idMap.size(); i++) {
@@ -136,11 +134,12 @@ public class StringPool implements StringAccess {
 
         // @note idMap access performance hack
         if (1 != idMap.size()) {
+            final Charset utf8 = Charset.forName("UTF-8");
             // offsets
             ByteBuffer end = ByteBuffer.allocate(4 * (idMap.size() - 1));
             int off = 0;
             for (int i = 1; i < idMap.size(); i++) {
-                off += idMap.get(i).getBytes().length;
+                off += idMap.get(i).getBytes(utf8).length;
                 end.putInt(off);
             }
             end.rewind();
@@ -148,7 +147,22 @@ public class StringPool implements StringAccess {
 
             // data
             for (int i = 1; i < idMap.size(); i++)
-                out.put(idMap.get(i).getBytes());
+                out.put(idMap.get(i).getBytes(utf8));
+        }
+    }
+
+    /**
+     * read remaining strings
+     * 
+     * @throws IOException
+     */
+    private final void ensureStrings() throws IOException {
+        if (null != input) {
+            for (int i = 1; i < stringPositions.size(); i++) {
+                get(i);
+            }
+            input.close();
+            input = null;
         }
     }
 
@@ -158,9 +172,7 @@ public class StringPool implements StringAccess {
     public void prepareAndAppend(FileOutputStream out, StateAppender as) throws IOException {
         final HashMap<String, Integer> serializationIDs = as.stringIDs;
 
-        // ensure all strings are present
-        for (int k = 1; k < stringPositions.size(); k++)
-            get(k);
+        ensureStrings();
 
         // create inverse map
         for (int i = 1; i < idMap.size(); i++) {
@@ -172,11 +184,12 @@ public class StringPool implements StringAccess {
         // Insert new strings to the map;
         // this is the place where duplications with lazy strings will be detected and eliminated
         // this is also the place, where new instances are appended to the output file
+        final Charset utf8 = Charset.forName("UTF-8");
         for (String s : knownStrings) {
             if (!serializationIDs.containsKey(s)) {
                 serializationIDs.put(s, idMap.size());
                 idMap.add(s);
-                todo.add(s.getBytes());
+                todo.add(s.getBytes(utf8));
             }
         }
 
@@ -259,5 +272,9 @@ public class StringPool implements StringAccess {
     @Override
     public void clear() {
         knownStrings.clear();
+    }
+
+    boolean hasInStream() {
+        return null != input;
     }
 }

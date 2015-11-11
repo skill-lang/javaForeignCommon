@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -224,14 +225,26 @@ public abstract class SkillState implements SkillFile {
         try {
             switch (writeMode) {
             case Write:
-                new StateWriter(this, FileOutputStream.write(path));
+                if (FileOutputStream.isWindows) {
+                    // we have to write into a temporary file and move the file afterwards
+                    File f = File.createTempFile("write", ".sf");
+                    f.createNewFile();
+                    new StateWriter(this, FileOutputStream.write(f.toPath()));
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException e) {
+                        // we are on windows, who cares?
+                    }
+                    Files.move(f.toPath(), path);
+                } else
+                    new StateWriter(this, FileOutputStream.write(path));
                 return;
 
             case Append:
                 // dirty appends will automatically become writes
                 if (dirty) {
                     changeMode(Mode.Write);
-                    new StateWriter(this, FileOutputStream.write(path));
+                    flush();
                 } else
                     new StateAppender(this, FileOutputStream.append(path));
                 return;
