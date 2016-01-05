@@ -287,25 +287,29 @@ abstract public class StoragePool<T extends B, B extends SkillObject> extends Fi
 
         long result = 0L;
         for (T x : xs) {
-            long v = x.skillID;
-            if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
+            if (null == x)
                 result += 1;
-            } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
-                result += 2;
-            } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
-                result += 3;
-            } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
-                result += 4;
-            } else if (0L == (v & 0xFFFFFFF800000000L)) {
-                result += 5;
-            } else if (0L == (v & 0xFFFFFC0000000000L)) {
-                result += 6;
-            } else if (0L == (v & 0xFFFE000000000000L)) {
-                result += 7;
-            } else if (0L == (v & 0xFF00000000000000L)) {
-                result += 8;
-            } else {
-                result += 9;
+            else {
+                long v = x.skillID;
+                if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
+                    result += 1;
+                } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
+                    result += 2;
+                } else if (0L == (v & 0xFFFFFFFFFFE00000L)) {
+                    result += 3;
+                } else if (0L == (v & 0xFFFFFFFFF0000000L)) {
+                    result += 4;
+                } else if (0L == (v & 0xFFFFFFF800000000L)) {
+                    result += 5;
+                } else if (0L == (v & 0xFFFFFC0000000000L)) {
+                    result += 6;
+                } else if (0L == (v & 0xFFFE000000000000L)) {
+                    result += 7;
+                } else if (0L == (v & 0xFF00000000000000L)) {
+                    result += 8;
+                } else {
+                    result += 9;
+                }
             }
         }
         return result;

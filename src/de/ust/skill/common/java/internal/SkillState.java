@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -227,15 +228,13 @@ public abstract class SkillState implements SkillFile {
             case Write:
                 if (FileOutputStream.isWindows) {
                     // we have to write into a temporary file and move the file afterwards
-                    File f = File.createTempFile("write", ".sf");
+                    File f = File.createTempFile("write", ".sf.tmp");
                     f.createNewFile();
+                    f.deleteOnExit();
+                    changePath(f.toPath());
                     new StateWriter(this, FileOutputStream.write(f.toPath()));
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (IOException e) {
-                        // we are on windows, who cares?
-                    }
-                    Files.move(f.toPath(), path);
+                    changePath(path);
+                    Files.copy(f.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
                 } else
                     new StateWriter(this, FileOutputStream.write(path));
                 return;
