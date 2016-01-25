@@ -229,12 +229,28 @@ public abstract class SkillState implements SkillFile {
                 if (FileOutputStream.isWindows) {
                     // we have to write into a temporary file and move the file afterwards
                     File f = File.createTempFile("write", ".sf.tmp");
+                    Path path = this.path;
                     f.createNewFile();
                     f.deleteOnExit();
                     changePath(f.toPath());
                     new StateWriter(this, FileOutputStream.write(f.toPath()));
+                    // try to get rid of remaining memory map
                     changePath(path);
-                    Files.copy(f.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
+                    int retries = 100;
+                    while (0 < retries--) {
+                        System.gc();
+                        Thread.sleep(10);
+                        System.runFinalization();
+                        try {
+                            Files.move(f.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            continue;
+                        }
+                        break;
+                    }
+                    if (0 >= retries)
+                        System.err.println("Failed to move file to desired location; your result may be located at "
+                                + f.getAbsolutePath());
                 } else
                     new StateWriter(this, FileOutputStream.write(path));
                 return;
