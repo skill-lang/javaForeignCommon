@@ -21,8 +21,8 @@ import de.ust.skill.common.jvm.streams.MappedOutStream;
  * 
  * @author Timm Felden
  */
-abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
-        de.ust.skill.common.java.api.FieldDeclaration<T> {
+abstract public class FieldDeclaration<T, Obj extends SkillObject>
+        implements de.ust.skill.common.java.api.FieldDeclaration<T> {
 
     /**
      * @note types may change during file parsing. this may seem like a hack, but it makes file parser implementation a
@@ -165,7 +165,7 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      * Read data from a mapped input stream and set it accordingly. This is invoked at the very end of state
      * construction and done massively in parallel.
      */
-    protected abstract void read(MappedInStream in, Chunk last);
+    protected abstract void read(ChunkEntry target);
 
     /**
      * offset calculation as preparation of writing data belonging to the owners last block
@@ -190,26 +190,31 @@ abstract public class FieldDeclaration<T, Obj extends SkillObject> implements
      *            errors will be reported in this queue
      */
     final void finish(ReadBarrier barrier, final ConcurrentLinkedQueue<SkillException> readErrors) {
+        // skip lazy and ignored fields
+        if ((this instanceof LazyField<?, ?> || this instanceof IgnoredField))
+            return;
 
         int block = 0;
-        for (ChunkEntry ce : dataChunks) {
+        for (ChunkEntry chunk : dataChunks) {
             barrier.beginRead();
             final int blockCounter = block++;
-            final MappedInStream map = ce.in;
-            final Chunk last = ce.c;
             final FieldDeclaration<T, Obj> f = this;
+            final ChunkEntry ce = chunk;
 
             SkillState.pool.execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        f.read(map, last);
-                        // map was not consumed
-                        if (!map.eof() && !(f instanceof LazyField<?, ?> || f instanceof IgnoredField))
+                        f.read(ce);
+                        // check that map was fully consumed and remove it
+                        MappedInStream map = ce.in;
+                        ce.in = null;
+                        if (!map.eof())
                             readErrors.add(
-                                    new PoolSizeMissmatchError(blockCounter, map.position(), last.begin, last.end, f));
+                                    new PoolSizeMissmatchError(blockCounter, map.position(), ce.c.begin, ce.c.end, f));
+
                     } catch (BufferUnderflowException e) {
-                        readErrors.add(new PoolSizeMissmatchError(blockCounter, last.begin, last.end, f, e));
+                        readErrors.add(new PoolSizeMissmatchError(blockCounter, ce.c.begin, ce.c.end, f, e));
                     } catch (SkillException t) {
                         readErrors.add(t);
                     } catch (Throwable t) {

@@ -277,4 +277,8 @@ public class StringPool implements StringAccess {
     boolean hasInStream() {
         return null != input;
     }
+
+    FileInputStream getInStream() {
+        return input;
+    }
 }

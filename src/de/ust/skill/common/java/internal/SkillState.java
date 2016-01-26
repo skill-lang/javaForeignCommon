@@ -1,10 +1,8 @@
 package de.ust.skill.common.java.internal;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +19,7 @@ import de.ust.skill.common.java.api.SkillFile;
 import de.ust.skill.common.java.api.StringAccess;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.internal.fieldTypes.StringType;
+import de.ust.skill.common.jvm.streams.FileInputStream;
 import de.ust.skill.common.jvm.streams.FileOutputStream;
 
 /**
@@ -38,6 +37,12 @@ public abstract class SkillState implements SkillFile {
      * path that will be targeted as binary file
      */
     private Path path;
+    /**
+     * a file input stream keeping the handle to a file for potential write operations
+     * 
+     * @note this is a consequence of the retarded windows file system
+     */
+    private FileInputStream input;
 
     /**
      * dirty flag used to prevent append after delete operations
@@ -94,6 +99,7 @@ public abstract class SkillState implements SkillFile {
             StringType stringType, Annotation annotationType) {
         this.strings = strings;
         this.path = path;
+        this.input = strings.getInStream();
         this.writeMode = mode;
         this.types = types;
         this.stringType = stringType;
@@ -226,33 +232,7 @@ public abstract class SkillState implements SkillFile {
         try {
             switch (writeMode) {
             case Write:
-                if (FileOutputStream.isWindows) {
-                    // we have to write into a temporary file and move the file afterwards
-                    File f = File.createTempFile("write", ".sf.tmp");
-                    Path path = this.path;
-                    f.createNewFile();
-                    f.deleteOnExit();
-                    changePath(f.toPath());
-                    new StateWriter(this, FileOutputStream.write(f.toPath()));
-                    // try to get rid of remaining memory map
-                    changePath(path);
-                    int retries = 100;
-                    while (0 < retries--) {
-                        System.gc();
-                        Thread.sleep(10);
-                        System.runFinalization();
-                        try {
-                            Files.move(f.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
-                        } catch (IOException e) {
-                            continue;
-                        }
-                        break;
-                    }
-                    if (0 >= retries)
-                        System.err.println("Failed to move file to desired location; your result may be located at "
-                                + f.getAbsolutePath());
-                } else
-                    new StateWriter(this, FileOutputStream.write(path));
+                new StateWriter(this, FileOutputStream.write(makeInStream()));
                 return;
 
             case Append:
@@ -261,7 +241,7 @@ public abstract class SkillState implements SkillFile {
                     changeMode(Mode.Write);
                     flush();
                 } else
-                    new StateAppender(this, FileOutputStream.append(path));
+                    new StateAppender(this, FileOutputStream.append(makeInStream()));
                 return;
 
             case ReadOnly:
@@ -278,6 +258,16 @@ public abstract class SkillState implements SkillFile {
         } catch (Exception e) {
             throw new SkillException("unexpected exception", e);
         }
+    }
+
+    /**
+     * @return the file input stream matching our current status
+     */
+    private FileInputStream makeInStream() throws IOException {
+        if (null == input || !path.equals(input.path()))
+            input = FileInputStream.open(path, false);
+
+        return input;
     }
 
     @Override

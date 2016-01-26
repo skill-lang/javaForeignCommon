@@ -70,7 +70,7 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
     }
 
     @Override
-    public void read(MappedInStream in, Chunk last) {
+    public void read(ChunkEntry last) {
         // deferred
     }
 
