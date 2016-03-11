@@ -190,7 +190,8 @@ abstract public class SerializationFunctions {
         }
     }
 
-    protected final static void writeFieldData(SkillState state, FileOutputStream out, ArrayList<Task> data, int offset) throws IOException, InterruptedException {
+    protected final static void writeFieldData(SkillState state, FileOutputStream out, ArrayList<Task> data, int offset)
+            throws IOException, InterruptedException {
 
         final Semaphore barrier = new Semaphore(0);
         // async reads will post their errors in this queue

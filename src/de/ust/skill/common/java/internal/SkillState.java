@@ -1,5 +1,6 @@
 package de.ust.skill.common.java.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +29,11 @@ import de.ust.skill.common.jvm.streams.FileOutputStream;
  * @author Timm Felden
  */
 public abstract class SkillState implements SkillFile {
+
+    /**
+     * if we are on windows, then we have to change some implementation details
+     */
+    public static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
     /**
      * write mode this state is operating on
@@ -155,6 +161,23 @@ public abstract class SkillState implements SkillFile {
     final public StringAccess Strings() {
         return strings;
     }
+    
+
+    @Override
+    public final boolean contains(SkillObject target) {
+        if (null != target) try {
+        	if(0 < target.skillID)
+        		return target == poolByName().get(target.skillName()).getByID(target.skillID);
+        	else if(0 == target.skillID)
+        		return true; // will evaluate to a null pointer if stored
+        	
+        	return poolByName().get(target.skillName()).newObjects.contains(target);
+        } catch (Exception e){
+        	// out of bounds or similar mean its not one of ours
+        	return false;
+        }
+        return true;
+    }
 
     @Override
     final public void delete(SkillObject target) {
@@ -232,7 +255,21 @@ public abstract class SkillState implements SkillFile {
         try {
             switch (writeMode) {
             case Write:
-                new StateWriter(this, FileOutputStream.write(makeInStream()));
+                if (isWindows) {
+                    // we have to write into a temporary file and move the file afterwards
+                    Path target = path;
+                    File f = File.createTempFile("write", ".sf");
+                    f.createNewFile();
+                    f.deleteOnExit();
+                    changePath(f.toPath());
+                    new StateWriter(this, FileOutputStream.write(makeInStream()));
+                    File targetFile = target.toFile();
+                    if (targetFile.exists())
+                        targetFile.delete();
+                    f.renameTo(targetFile);
+                    changePath(target);
+                } else
+                    new StateWriter(this, FileOutputStream.write(makeInStream()));
                 return;
 
             case Append:

@@ -79,6 +79,13 @@ public interface SkillFile {
     public abstract StringAccess Strings();
 
     /**
+     * @return true, iff the argument object is managed by this state
+     * @note will return true, if argument is null
+     * @note this operation is kind of expensive
+     */
+    public abstract boolean contains(SkillObject target);
+    
+    /**
      * ensure that the argument instance will be deleted on next flush
      */
     public abstract void delete(SkillObject target);
