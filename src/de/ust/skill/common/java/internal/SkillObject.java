@@ -29,8 +29,6 @@ public abstract class SkillObject implements Serializable {
 	 */
 	protected SkillObject(long skillID) {
 		this.skillID = skillID;
-
-		new Thread();
 	}
 
 	/**
