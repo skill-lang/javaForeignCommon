@@ -166,9 +166,9 @@ public abstract class SkillState implements SkillFile {
     @Override
     public final boolean contains(ISkillObject target) {
         if (null != target) try {
-        	if(0 < target.skillID)
-        		return target == poolByName().get(target.skillName()).getByID(target.skillID);
-        	else if(0 == target.skillID)
+            if(0 < target.getSkillID())
+				return target == poolByName().get(target.skillName()).getByID(target.getSkillID());
+            else if(0 == target.getSkillID())
         		return true; // will evaluate to a null pointer if stored
         	
         	return poolByName().get(target.skillName()).newObjects.contains(target);
@@ -182,7 +182,7 @@ public abstract class SkillState implements SkillFile {
     @Override
     final public void delete(ISkillObject target) {
         if (null != target) {
-            dirty |= target.skillID > 0;
+            dirty |= target.getSkillID() > 0;
             poolByName().get(target.skillName()).delete(target);
         }
     }

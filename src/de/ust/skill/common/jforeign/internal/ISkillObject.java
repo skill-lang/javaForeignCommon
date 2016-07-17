@@ -8,14 +8,7 @@ package de.ust.skill.common.jforeign.internal;
  * @note This type definition is in internal, because we have to protect setSkillID from the user
  */
 // TODO create a builder for skill objects
-public abstract class ISkillObject {
-
-    /**
-     * The constructor is protected to ensure that users do not break states accidentally
-     */
-    protected ISkillObject(long skillID) {
-        this.skillID = skillID;
-    }
+public interface ISkillObject {
 
     /**
      * @return the skill name of this type
@@ -23,29 +16,18 @@ public abstract class ISkillObject {
     public abstract String skillName();
 
     /**
-     * -1 for new objects<br>
-     * 0 for deleted objects<br>
-     * everything else is the ID of an object inside of a file
-     */
-    protected long skillID;
-
-    /**
      * @return whether the object has been deleted
      */
-    public boolean isDeleted() {
-        return 0 == skillID;
+    public default boolean isDeleted() {
+        return 0 == getSkillID();
     }
 
     /**
      * Do not rely on skill ID if you do not know exactly what you are doing.
      */
-    public final long getSkillID() {
-        return skillID;
-    }
+    public long getSkillID();
 
-    final void setSkillID(long skillID) {
-        this.skillID = skillID;
-    }
+    public void setSkillID(long skillID); //TODO: want this?
 
     /**
      * reflective setter
@@ -56,7 +38,7 @@ public abstract class ISkillObject {
      *            the new value of the field
      * @note if field is not a distributed field of this type, then anything may happen
      */
-    public <T> void set(de.ust.skill.common.jforeign.api.FieldDeclaration<T> field, T value) {
+    public default <T> void set(de.ust.skill.common.jforeign.api.FieldDeclaration<T> field, T value) {
         field.setR(this, value);
     }
 
@@ -70,23 +52,23 @@ public abstract class ISkillObject {
      *       parameter on each overload, although this pattern would automagically make everything work as intended and
      *       the user would always know whether using a field declaration on a specific instance would work well.
      */
-    public <T> T get(de.ust.skill.common.jforeign.api.FieldDeclaration<T> field) {
+    public default <T> T get(de.ust.skill.common.jforeign.api.FieldDeclaration<T> field) {
         return field.getR(this);
     }
 
     /**
      * potentially expensive but more pretty representation of this instance.
      */
-    public String prettyString() {
+    public default String prettyString() {
         StringBuilder sb = new StringBuilder("SkillObject(this: ").append(this);
         return sb.append(")").toString();
     }
 
-    public static final class SubType extends ISkillObject implements NamedType {
+    public static final class SubType implements NamedType, ISkillObject {
         private final StoragePool<?, ?> τPool;
 
         SubType(StoragePool<?, ?> τPool, long skillID) {
-            super(skillID);
+            setSkillID(skillID);
             this.τPool = τPool;
         }
 
@@ -97,12 +79,23 @@ public abstract class ISkillObject {
 
         @Override
         public String toString() {
-            return skillName() + "#" + skillID;
+            return skillName() + "#" + getSkillID();
         }
 
         @Override
         public String skillName() {
             return τPool.name;
+        }
+
+        @Override
+        public long getSkillID() {
+            //TODO: what?
+            return 0;
+        }
+
+        @Override
+        public void setSkillID(long skillID) {
+            //TODO: what?
         }
     }
 }

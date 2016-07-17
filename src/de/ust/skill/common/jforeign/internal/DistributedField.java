@@ -70,7 +70,7 @@ public class DistributedField<T, Obj extends ISkillObject> extends FieldDeclarat
 
         // we have to filter the right values
         return type.calculateOffset((Collection<T>) Arrays.asList(data.entrySet().stream()
-                .filter(e -> range.contains(e.getKey().skillID)).map(e -> e.getValue()).toArray()));
+                .filter(e -> range.contains(e.getKey().getSkillID())).map(e -> e.getValue()).toArray()));
     }
 
     @Override
@@ -101,7 +101,7 @@ public class DistributedField<T, Obj extends ISkillObject> extends FieldDeclarat
 
     @Override
     public T getR(ISkillObject ref) {
-        if (-1 == ref.skillID)
+        if (-1 == ref.getSkillID())
             return newData.get(ref);
 
         return data.get(ref);
@@ -109,7 +109,7 @@ public class DistributedField<T, Obj extends ISkillObject> extends FieldDeclarat
 
     @Override
     public void setR(ISkillObject ref, T value) {
-        if (-1 == ref.skillID)
+        if (-1 == ref.getSkillID())
             newData.put(ref, value);
         else
             data.put(ref, value);

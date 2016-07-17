@@ -84,7 +84,7 @@ public final class LazyField<T, Obj extends ISkillObject> extends DistributedFie
 
     @Override
     public T getR(ISkillObject ref) {
-        if (-1 == ref.skillID)
+        if (-1 == ref.getSkillID())
             return newData.get(ref);
 
         if (!isLoaded)
@@ -95,7 +95,7 @@ public final class LazyField<T, Obj extends ISkillObject> extends DistributedFie
 
     @Override
     public void setR(ISkillObject ref, T value) {
-        if (-1 == ref.skillID)
+        if (-1 == ref.getSkillID())
             newData.put(ref, value);
         else {
             if (!isLoaded)

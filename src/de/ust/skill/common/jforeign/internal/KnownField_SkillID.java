@@ -17,22 +17,22 @@ public class KnownField_SkillID<T extends ISkillObject> extends AutoField<Long, 
 
     @Override
     public Long getR(ISkillObject ref) {
-        return ref.skillID;
+        return ref.getSkillID();
     }
 
     @Override
     public void setR(ISkillObject ref, Long value) {
-        ref.skillID = value;
+        ref.setSkillID(value);
     }
 
     @Override
     public long get(T ref) {
-        return ref.skillID;
+        return ref.getSkillID();
     }
 
     @Override
     public void set(T ref, long value) {
-        ref.skillID = value;
+        ref.setSkillID(value);
     }
 
     @Override

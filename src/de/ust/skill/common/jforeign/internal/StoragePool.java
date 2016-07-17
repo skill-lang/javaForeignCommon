@@ -290,7 +290,7 @@ abstract public class StoragePool<T extends B, B extends ISkillObject> extends F
             if (null == x)
                 result += 1;
             else {
-                long v = x.skillID;
+                long v = x.getSkillID();
                 if (0L == (v & 0xFFFFFFFFFFFFFF80L)) {
                     result += 1;
                 } else if (0L == (v & 0xFFFFFFFFFFFFC000L)) {
@@ -317,7 +317,7 @@ abstract public class StoragePool<T extends B, B extends ISkillObject> extends F
 
     @Override
     public final void writeSingleField(T ref, OutStream out) throws IOException {
-        out.v64(null == ref ? 0 : ref.skillID);
+        out.v64(null == ref ? 0 : ref.getSkillID());
     }
 
     /**
@@ -383,7 +383,7 @@ abstract public class StoragePool<T extends B, B extends ISkillObject> extends F
      */
     final void delete(ISkillObject target) {
         if (!target.isDeleted()) {
-            target.skillID = 0;
+            target.setSkillID(0);
             deletedCount++;
         }
     }
@@ -525,7 +525,7 @@ abstract public class StoragePool<T extends B, B extends ISkillObject> extends F
             // build block chunk
             final int lcount = newDynamicInstancesSize();
             // //@ note this is the index into the data array and NOT the written lbpo
-            final int lbpo = (0 == lcount) ? 0 : ((int) newDynamicInstances().next().skillID - 1);
+            final int lbpo = (0 == lcount) ? 0 : ((int) newDynamicInstances().next().getSkillID() - 1);
 
             blocks.addLast(new Block(lbpo, lcount));
 

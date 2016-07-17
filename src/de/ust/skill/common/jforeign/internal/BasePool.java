@@ -125,7 +125,7 @@ public class BasePool<T extends ISkillObject> extends StoragePool<T, T> {
         Iterator<T> is = typeOrderIterator();
         while (is.hasNext()) {
             final T i = is.next();
-            if (i.skillID != 0) {
+            if (i.getSkillID() != 0) {
                 d[p++] = i;
                 i.setSkillID(p);
             }
