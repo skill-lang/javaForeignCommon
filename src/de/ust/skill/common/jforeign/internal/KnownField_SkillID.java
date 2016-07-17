@@ -9,19 +9,19 @@ import de.ust.skill.common.jforeign.internal.fieldTypes.V64;
  * 
  * @author Timm Felden
  */
-public class KnownField_SkillID<T extends SkillObject> extends AutoField<Long, T> implements KnownLongField<T> {
+public class KnownField_SkillID<T extends ISkillObject> extends AutoField<Long, T> implements KnownLongField<T> {
 
     public KnownField_SkillID(StoragePool<T, ? super T> storagePool) {
         super(V64.get(), "skillid", 0, storagePool);
     }
 
     @Override
-    public Long getR(SkillObject ref) {
+    public Long getR(ISkillObject ref) {
         return ref.skillID;
     }
 
     @Override
-    public void setR(SkillObject ref, Long value) {
+    public void setR(ISkillObject ref, Long value) {
         ref.skillID = value;
     }
 

@@ -1,6 +1,6 @@
 package de.ust.skill.common.jforeign.api;
 
-import de.ust.skill.common.jforeign.internal.SkillObject;
+import de.ust.skill.common.jforeign.internal.ISkillObject;
 
 
 /**
@@ -30,10 +30,10 @@ public interface FieldDeclaration<T> {
     /**
      * Generic getter for an object.
      */
-    public T getR(SkillObject ref);
+    public T getR(ISkillObject ref);
 
     /**
      * Generic setter for an object.
      */
-    public void setR(SkillObject ref, T value);
+    public void setR(ISkillObject ref, T value);
 }

@@ -13,7 +13,7 @@ import de.ust.skill.common.jvm.streams.MappedInStream;
  * @author Timm Felden
  * @note implementation abuses a distributed field that can be accessed iff there are no data chunks to be processed
  */
-public final class LazyField<T, Obj extends SkillObject> extends DistributedField<T, Obj> {
+public final class LazyField<T, Obj extends ISkillObject> extends DistributedField<T, Obj> {
 
     public LazyField(FieldType<T> type, String name, int index, StoragePool<Obj, ? super Obj> owner) {
         super(type, name, index, owner);
@@ -23,7 +23,7 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
 
     // executes pending read operations
     private void load() {
-        SkillObject[] d = owner.basePool.data;
+        ISkillObject[] d = owner.basePool.data;
         int blockCounter = 0;
 
         for (de.ust.skill.common.jforeign.internal.FieldDeclaration.ChunkEntry ce : dataChunks) {
@@ -83,7 +83,7 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
     }
 
     @Override
-    public T getR(SkillObject ref) {
+    public T getR(ISkillObject ref) {
         if (-1 == ref.skillID)
             return newData.get(ref);
 
@@ -94,7 +94,7 @@ public final class LazyField<T, Obj extends SkillObject> extends DistributedFiel
     }
 
     @Override
-    public void setR(SkillObject ref, T value) {
+    public void setR(ISkillObject ref, T value) {
         if (-1 == ref.skillID)
             newData.put(ref, value);
         else {

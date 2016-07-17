@@ -68,7 +68,7 @@ abstract public class SerializationFunctions {
                 switch (f.type.typeID) {
                 // string
                 case 14:
-                    for (SkillObject i : p)
+                    for (ISkillObject i : p)
                         strings.add((String) i.get(f));
                     break;
 
@@ -78,7 +78,7 @@ abstract public class SerializationFunctions {
                 case 18:
                 case 19:
                     if (((SingleArgumentType<?, ?>) (f.type)).groundType.typeID == 14) {
-                        for (SkillObject i : p) {
+                        for (ISkillObject i : p) {
                             @SuppressWarnings("unchecked")
                             Collection<String> xs = (Collection<String>) i.get(f);
                             for (String s : xs)

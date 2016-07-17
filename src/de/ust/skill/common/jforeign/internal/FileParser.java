@@ -70,7 +70,7 @@ public abstract class FileParser<State extends SkillState> {
      * 
      * @note implementation depends heavily on the specification
      */
-    protected abstract <T extends B, B extends SkillObject> StoragePool<T, B> newPool(String name,
+    protected abstract <T extends B, B extends ISkillObject> StoragePool<T, B> newPool(String name,
             StoragePool<? super T, B> superPool, HashSet<TypeRestriction> restrictions);
 
     protected FileParser(FileInputStream in) {
@@ -242,7 +242,7 @@ public abstract class FileParser<State extends SkillState> {
     }
 
     @SuppressWarnings("unchecked")
-    private <B extends SkillObject, T extends B> void typeDefinition() {
+    private <B extends ISkillObject, T extends B> void typeDefinition() {
         // read type part
         final String name;
         try {
@@ -405,7 +405,7 @@ public abstract class FileParser<State extends SkillState> {
      * helper for pool creation in generated code; optimization for all pools that do not have auto fields
      */
     @SuppressWarnings("unchecked")
-    protected static <T extends SkillObject> AutoField<?, T>[] noAutoFields() {
+    protected static <T extends ISkillObject> AutoField<?, T>[] noAutoFields() {
         return (AutoField<?, T>[]) StoragePool.noAutoFields;
     }
 }

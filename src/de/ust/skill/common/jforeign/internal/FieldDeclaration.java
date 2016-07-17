@@ -21,7 +21,7 @@ import de.ust.skill.common.jvm.streams.MappedOutStream;
  * 
  * @author Timm Felden
  */
-abstract public class FieldDeclaration<T, Obj extends SkillObject>
+abstract public class FieldDeclaration<T, Obj extends ISkillObject>
         implements de.ust.skill.common.jforeign.api.FieldDeclaration<T> {
 
     /**

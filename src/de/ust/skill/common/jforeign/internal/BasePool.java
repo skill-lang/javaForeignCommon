@@ -16,7 +16,7 @@ import de.ust.skill.common.jforeign.iterators.Iterators;
  * @author Timm Felden
  * @param <T>
  */
-public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
+public class BasePool<T extends ISkillObject> extends StoragePool<T, T> {
 
     /**
      * workaround for fucked-up generic array types
@@ -26,7 +26,7 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
      */
     @SuppressWarnings({ "static-method", "unchecked" })
     protected T[] newArray(int size) {
-        return (T[]) new SkillObject[size];
+        return (T[]) new ISkillObject[size];
     }
 
     /**
@@ -88,7 +88,7 @@ public class BasePool<T extends SkillObject> extends StoragePool<T, T> {
                 return;
 
             @SuppressWarnings("unchecked")
-            T r = (T) (new SkillObject.SubType(this, i + 1));
+            T r = (T) (new ISkillObject.SubType(this, i + 1));
             data[i] = r;
             staticData.add(r);
 
