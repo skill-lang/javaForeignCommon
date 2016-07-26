@@ -3,7 +3,7 @@ package de.ust.skill.common.jforeign.internal.fieldDeclarations;
 import de.ust.skill.common.jforeign.api.SkillException;
 import de.ust.skill.common.jforeign.internal.FieldDeclaration;
 import de.ust.skill.common.jforeign.internal.FieldType;
-import de.ust.skill.common.jforeign.internal.ISkillObject;
+import de.ust.skill.common.jforeign.internal.SkillObject;
 import de.ust.skill.common.jforeign.internal.StoragePool;
 import de.ust.skill.common.jvm.streams.MappedOutStream;
 
@@ -12,7 +12,7 @@ import de.ust.skill.common.jvm.streams.MappedOutStream;
  * 
  * @author Timm Felden
  */
-public abstract class AutoField<T, Obj extends ISkillObject> extends FieldDeclaration<T, Obj> {
+public abstract class AutoField<T, Obj extends SkillObject> extends FieldDeclaration<T, Obj> {
     protected AutoField(FieldType<T> type, String name, int index, StoragePool<Obj, ? super Obj> owner) {
         super(type, name, index, owner);
     }

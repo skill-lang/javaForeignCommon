@@ -164,7 +164,7 @@ public abstract class SkillState implements SkillFile {
     
 
     @Override
-    public final boolean contains(ISkillObject target) {
+    public final boolean contains(SkillObject target) {
         if (null != target) try {
             if(0 < target.getSkillID())
 				return target == poolByName().get(target.skillName()).getByID(target.getSkillID());
@@ -180,7 +180,7 @@ public abstract class SkillState implements SkillFile {
     }
 
     @Override
-    final public void delete(ISkillObject target) {
+    final public void delete(SkillObject target) {
         if (null != target) {
             dirty |= target.getSkillID() > 0;
             poolByName().get(target.skillName()).delete(target);
@@ -322,12 +322,12 @@ public abstract class SkillState implements SkillFile {
     final protected ArrayList<StoragePool<?, ?>> types;
 
     @Override
-    final public Iterable<? extends Access<? extends ISkillObject>> allTypes() {
+    final public Iterable<? extends Access<? extends SkillObject>> allTypes() {
         return types;
     }
 
     @Override
-    final public Stream<? extends Access<? extends ISkillObject>> allTypesStream() {
+    final public Stream<? extends Access<? extends SkillObject>> allTypesStream() {
         return types.stream();
     }
 }

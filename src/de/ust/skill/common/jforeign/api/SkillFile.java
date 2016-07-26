@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import de.ust.skill.common.jforeign.internal.ISkillObject;
+import de.ust.skill.common.jforeign.internal.SkillObject;
 
 /**
  * A SKilL file that can be used to access types stored in a skill file and persist changes.
@@ -83,22 +83,22 @@ public interface SkillFile {
      * @note will return true, if argument is null
      * @note this operation is kind of expensive
      */
-    public abstract boolean contains(ISkillObject target);
+    public abstract boolean contains(SkillObject target);
     
     /**
      * ensure that the argument instance will be deleted on next flush
      */
-    public abstract void delete(ISkillObject target);
+    public abstract void delete(SkillObject target);
 
     /**
      * @return iterator over all user types
      */
-    public abstract Iterable<? extends Access<? extends ISkillObject>> allTypes();
+    public abstract Iterable<? extends Access<? extends SkillObject>> allTypes();
 
     /**
      * @return stream over all user types
      */
-    public abstract Stream<? extends Access<? extends ISkillObject>> allTypesStream();
+    public abstract Stream<? extends Access<? extends SkillObject>> allTypesStream();
 
     /**
      * Set a new path for the file. This will influence the next flush/close operation.

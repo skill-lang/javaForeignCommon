@@ -8,7 +8,7 @@ package de.ust.skill.common.jforeign.internal;
  * @note This type definition is in internal, because we have to protect setSkillID from the user
  */
 // TODO create a builder for skill objects
-public interface ISkillObject {
+public interface SkillObject {
 
     /**
      * @return the skill name of this type
@@ -64,7 +64,7 @@ public interface ISkillObject {
         return sb.append(")").toString();
     }
 
-    public static final class SubType implements NamedType, ISkillObject {
+    public static final class SubType implements NamedType, SkillObject {
         private final StoragePool<?, ?> τPool;
 
         SubType(StoragePool<?, ?> τPool, long skillID) {

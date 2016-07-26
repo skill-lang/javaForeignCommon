@@ -13,7 +13,7 @@ import de.ust.skill.common.jforeign.iterators.Iterators;
  * 
  * @author Timm Felden
  */
-public class SubPool<T extends B, B extends ISkillObject> extends StoragePool<T, B> {
+public class SubPool<T extends B, B extends SkillObject> extends StoragePool<T, B> {
 
     public SubPool(int poolIndex, String name, StoragePool<? super T, B> superPool, Set<String> knownFields,
             AutoField<?, T>[] autoFields) {
@@ -49,7 +49,7 @@ public class SubPool<T extends B, B extends ISkillObject> extends StoragePool<T,
                 return;
 
             @SuppressWarnings("unchecked")
-            T r = (T) (new ISkillObject.SubType(this, i + 1));
+            T r = (T) (new SkillObject.SubType(this, i + 1));
             data[i] = r;
             staticData.add(r);
 

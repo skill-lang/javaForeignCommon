@@ -38,7 +38,7 @@ import de.ust.skill.common.jvm.streams.OutStream;
  * @note We do not guarantee functional correctness if instances from multiple skill files are mixed. Such usage will
  *       likely break at least one of the files.
  */
-abstract public class StoragePool<T extends B, B extends ISkillObject> extends FieldType<T>
+abstract public class StoragePool<T extends B, B extends SkillObject> extends FieldType<T>
         implements Access<T>, ReferenceType {
 
     /**
@@ -108,7 +108,7 @@ abstract public class StoragePool<T extends B, B extends ISkillObject> extends F
      * @return magic cast to placeholder which well never fail at runtime, because the array is empty anyway
      */
     @SuppressWarnings("unchecked")
-    protected static final <T extends ISkillObject> AutoField<?, T>[] noAutoFields() {
+    protected static final <T extends SkillObject> AutoField<?, T>[] noAutoFields() {
         return (AutoField<?, T>[]) noAutoFields;
     }
 
@@ -381,7 +381,7 @@ abstract public class StoragePool<T extends B, B extends ISkillObject> extends F
      * @note we type target using the erasure directly, because the Java type system is too weak to express correct
      *       typing, when taking the pool from a map
      */
-    final void delete(ISkillObject target) {
+    final void delete(SkillObject target) {
         if (!target.isDeleted()) {
             target.setSkillID(0);
             deletedCount++;
@@ -390,8 +390,8 @@ abstract public class StoragePool<T extends B, B extends ISkillObject> extends F
 
     @Override
     public boolean remove(Object o) {
-        if (o instanceof ISkillObject) {
-            owner().delete((ISkillObject) o);
+        if (o instanceof SkillObject) {
+            owner().delete((SkillObject) o);
             return true;
         }
         return false;

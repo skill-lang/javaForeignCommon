@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 import de.ust.skill.common.jforeign.internal.FieldType;
 import de.ust.skill.common.jforeign.internal.NamedType;
-import de.ust.skill.common.jforeign.internal.ISkillObject;
+import de.ust.skill.common.jforeign.internal.SkillObject;
 import de.ust.skill.common.jforeign.internal.StoragePool;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
@@ -17,7 +17,7 @@ import de.ust.skill.common.jvm.streams.OutStream;
  * 
  * @author Timm Felden
  */
-public final class Annotation extends FieldType<ISkillObject>implements ReferenceType {
+public final class Annotation extends FieldType<SkillObject>implements ReferenceType {
 
     private final ArrayList<StoragePool<?, ?>> types;
     private HashMap<String, StoragePool<?, ?>> typeByName = null;
@@ -41,7 +41,7 @@ public final class Annotation extends FieldType<ISkillObject>implements Referenc
     }
 
     @Override
-    public ISkillObject readSingleField(InStream in) {
+    public SkillObject readSingleField(InStream in) {
         final int t = (int) in.v64();
         final long f = in.v64();
         if (0 == t)
@@ -50,9 +50,9 @@ public final class Annotation extends FieldType<ISkillObject>implements Referenc
     }
 
     @Override
-    public long calculateOffset(Collection<ISkillObject> xs) {
+    public long calculateOffset(Collection<SkillObject> xs) {
         long result = 0L;
-        for (ISkillObject ref : xs) {
+        for (SkillObject ref : xs) {
             if (null == ref)
                 result += 2;
             else {
@@ -72,7 +72,7 @@ public final class Annotation extends FieldType<ISkillObject>implements Referenc
     /**
      * used for simple offset calculation
      */
-    public long singleOffset(ISkillObject ref) {
+    public long singleOffset(SkillObject ref) {
         if (null == ref)
             return 2L;
 
@@ -86,7 +86,7 @@ public final class Annotation extends FieldType<ISkillObject>implements Referenc
     }
 
     @Override
-    public void writeSingleField(ISkillObject ref, OutStream out) throws IOException {
+    public void writeSingleField(SkillObject ref, OutStream out) throws IOException {
         if (null == ref) {
             // magic trick!
             out.i16((short) 0);

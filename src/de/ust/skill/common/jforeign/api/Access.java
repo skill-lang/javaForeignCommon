@@ -3,9 +3,9 @@ package de.ust.skill.common.jforeign.api;
 import java.util.Collection;
 import java.util.Iterator;
 
-import de.ust.skill.common.jforeign.internal.ISkillObject;
+import de.ust.skill.common.jforeign.internal.SkillObject;
 
-public interface Access<T extends ISkillObject> extends Collection<T> {
+public interface Access<T extends SkillObject> extends Collection<T> {
 
     /**
      * @return the skill file owning this access

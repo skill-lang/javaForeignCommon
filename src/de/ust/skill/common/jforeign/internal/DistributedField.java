@@ -16,7 +16,7 @@ import de.ust.skill.common.jvm.streams.MappedOutStream;
 /**
  * The fields data is distributed into an array (for now its a hash map) holding its instances.
  */
-public class DistributedField<T, Obj extends ISkillObject> extends FieldDeclaration<T, Obj> {
+public class DistributedField<T, Obj extends SkillObject> extends FieldDeclaration<T, Obj> {
 
     public DistributedField(FieldType<T> type, String name, int index, StoragePool<Obj, ? super Obj> owner) {
         super(type, name, index, owner);
@@ -24,14 +24,14 @@ public class DistributedField<T, Obj extends ISkillObject> extends FieldDeclarat
 
     // data held as in storage pools
     // @note see paper notes for O(1) implementation
-    protected HashMap<ISkillObject, T> data = new HashMap<>(); // Array[T]()
-    protected HashMap<ISkillObject, T> newData = new HashMap<>();
+    protected HashMap<SkillObject, T> data = new HashMap<>(); // Array[T]()
+    protected HashMap<SkillObject, T> newData = new HashMap<>();
 
     @Override
     public void read(ChunkEntry ce) {
         final MappedInStream in = ce.in;
         final Chunk last = ce.c;
-        final ISkillObject[] d = owner.basePool.data;
+        final SkillObject[] d = owner.basePool.data;
         final long firstPosition = in.position();
         try {
             if (last instanceof SimpleChunk) {
@@ -76,7 +76,7 @@ public class DistributedField<T, Obj extends ISkillObject> extends FieldDeclarat
     @Override
     public void write(MappedOutStream out) {
         try {
-            final ISkillObject[] d = owner.basePool.data;
+            final SkillObject[] d = owner.basePool.data;
             final Chunk last = lastChunk();
             if (last instanceof SimpleChunk) {
                 final SimpleChunk c = (SimpleChunk) last;
@@ -100,7 +100,7 @@ public class DistributedField<T, Obj extends ISkillObject> extends FieldDeclarat
     }
 
     @Override
-    public T getR(ISkillObject ref) {
+    public T getR(SkillObject ref) {
         if (-1 == ref.getSkillID())
             return newData.get(ref);
 
@@ -108,7 +108,7 @@ public class DistributedField<T, Obj extends ISkillObject> extends FieldDeclarat
     }
 
     @Override
-    public void setR(ISkillObject ref, T value) {
+    public void setR(SkillObject ref, T value) {
         if (-1 == ref.getSkillID())
             newData.put(ref, value);
         else
