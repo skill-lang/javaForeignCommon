@@ -60,7 +60,7 @@ public final class Annotation extends FieldType<SkillObject>implements Reference
                     result += V64.singleV64Offset(((NamedType) ref).τPool().typeID() - 31);
                 else
                     result += V64.singleV64Offset(
-                            typeByName.get(ref.getClass().getSimpleName().toLowerCase()).typeID() - 31);
+                            typeByName.get(ref.skillName()).typeID() - 31);
 
                 result += V64.singleV64Offset(ref.getSkillID());
             }
@@ -80,7 +80,7 @@ public final class Annotation extends FieldType<SkillObject>implements Reference
         if (ref instanceof NamedType)
             name = V64.singleV64Offset(((NamedType) ref).τPool().typeID() - 31);
         else
-            name = V64.singleV64Offset(typeByName.get(ref.getClass().getSimpleName().toLowerCase()).typeID() - 31);
+            name = V64.singleV64Offset(typeByName.get(ref.skillName()).typeID() - 31);
 
         return name + V64.singleV64Offset(ref.getSkillID());
     }
@@ -96,7 +96,7 @@ public final class Annotation extends FieldType<SkillObject>implements Reference
         if (ref instanceof NamedType)
             out.v64(((NamedType) ref).τPool().typeID() - 31);
         else
-            out.v64(typeByName.get(ref.getClass().getSimpleName().toLowerCase()).typeID() - 31);
+            out.v64(typeByName.get(ref.skillName()).typeID() - 31);
         out.v64(ref.getSkillID());
 
     }
