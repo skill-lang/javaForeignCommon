@@ -40,7 +40,8 @@ import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
 
 /**
- * The parser implementation is based on the denotational semantics given in TR14§6.
+ * The parser implementation is based on the denotational semantics given in
+ * TR14§6.
  *
  * @author Timm Felden
  * @param <State>
@@ -53,7 +54,8 @@ public abstract class FileParser<State extends SkillState> {
     protected int blockCounter = 0;
     protected HashSet<String> seenTypes = new HashSet<>();
 
-    // this barrier is strictly increasing inside of each block and reset to 0 at the beginning of each block
+    // this barrier is strictly increasing inside of each block and reset to 0
+    // at the beginning of each block
     protected int blockIDBarrier = 0;
 
     // strings
@@ -126,8 +128,9 @@ public abstract class FileParser<State extends SkillState> {
     private long offset = 0L;
 
     /**
-     * Turns a field type into a preliminary type information. In case of user types, the declaration of the respective
-     * user type may follow after the field declaration.
+     * Turns a field type into a preliminary type information. In case of user
+     * types, the declaration of the respective user type may follow after the
+     * field declaration.
      */
     FieldType<?> fieldType() {
         final int typeID = (int) in.v64();
@@ -210,32 +213,63 @@ public abstract class FileParser<State extends SkillState> {
             final int id = (int) in.v64();
             switch (id) {
 
-            case 0:
+            case 0: {
                 if (t instanceof ReferenceType)
                     rval.add(NonNull.get());
                 else
                     throw new ParseException(in, blockCounter, null, "Nonnull restriction on non-refernce type: %s.",
                             t.toString());
                 break;
+            }
 
-            case 3:
+            case 1: {
+                // default
+                if (t instanceof ReferenceType) {
+                    // TODO typeId -> ref
+                    in.v64();
+                } else {
+                    // TODO other values
+                    t.readSingleField(in);
+                }
+                break;
+            }
+
+            case 3: {
                 final FieldRestriction<?> r = Range.make(t.typeID, in);
                 if (null == r)
                     throw new ParseException(in, blockCounter, null, "Type %s can not be range restricted!",
                             t.toString());
                 rval.add(r);
                 break;
+            }
 
-            case 5:
-                // case 5 ⇒ Coding(String.get(in.v64))
-            case 7:
-                // case 7 ⇒ ConstantLengthPointer
+            case 5: {
+                // TODO cod0ing
+                // string.get
+                in.v64();
+                break;
+            }
+
+            case 7: {
+                // TODO CLP
+                break;
+            }
+
+            case 9: {
+                for (int c = (int) in.v64(); c != 0; c--) {
+                    // type IDs
+                    in.v64();
+                }
+                break;
+            }
+
             default:
                 if (id <= 9 || 1 == (id % 2))
                     throw new ParseException(in, blockCounter, null,
                             "Found unknown field restriction %d. Please regenerate your binding, if possible.", id);
                 System.err
                         .println("Skipped unknown skippable type restriction. Please update the SKilL implementation.");
+                break;
             }
         }
         return rval;
@@ -402,7 +436,8 @@ public abstract class FileParser<State extends SkillState> {
     }
 
     /**
-     * helper for pool creation in generated code; optimization for all pools that do not have auto fields
+     * helper for pool creation in generated code; optimization for all pools
+     * that do not have auto fields
      */
     @SuppressWarnings("unchecked")
     protected static <T extends SkillObject> AutoField<?, T>[] noAutoFields() {

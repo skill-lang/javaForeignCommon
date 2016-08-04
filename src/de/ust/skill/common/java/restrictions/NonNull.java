@@ -8,7 +8,7 @@ import de.ust.skill.common.java.internal.SkillObject;
  * 
  * @author Timm Felden
  */
-public class NonNull<T extends SkillObject> implements FieldRestriction<T> {
+public class NonNull<T> implements FieldRestriction<T> {
     private static final NonNull<?> instance = new NonNull<>();
 
     private NonNull() {
@@ -19,7 +19,7 @@ public class NonNull<T extends SkillObject> implements FieldRestriction<T> {
     }
 
     @Override
-    public void check(SkillObject value) throws SkillException {
+    public void check(T value) throws SkillException {
         if (value == null)
             throw new SkillException("Null value violates @NonNull.");
     }
