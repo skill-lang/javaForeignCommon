@@ -1,7 +1,7 @@
-package de.ust.skill.common.java.internal;
+package de.ust.skill.common.jforeign.internal;
 
-import de.ust.skill.common.java.api.FieldType;
-import de.ust.skill.common.java.api.SkillException;
+import de.ust.skill.common.jforeign.api.FieldType;
+import de.ust.skill.common.jforeign.api.SkillException;
 
 /**
  * Thrown in case of a type miss-match on a field type.
@@ -10,7 +10,7 @@ import de.ust.skill.common.java.api.SkillException;
  */
 public class TypeMissmatchError extends SkillException {
 
-    public TypeMissmatchError(de.ust.skill.common.java.api.FieldType<?> type, String expected, String field, String pool) {
+    public TypeMissmatchError(de.ust.skill.common.jforeign.api.FieldType<?> type, String expected, String field, String pool) {
         super(String.format("During construction of %s.%s: Encountered incompatible type \"%s\" (expected: %s)", pool,
                 field, type.toString(), expected));
     }
