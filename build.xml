@@ -40,7 +40,7 @@
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
 
   <target depends="build-project" name="build-jar">
-    <jar destfile="skill.java.common.jar"
+    <jar destfile="skill.jforeign.common.jar"
       basedir="bin"
       includes=""
       excludes="">
