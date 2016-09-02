@@ -3,6 +3,7 @@ package de.ust.skill.common.jforeign.internal.fieldTypes;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import de.ust.skill.common.jforeign.internal.FieldType;
@@ -25,6 +26,11 @@ public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
         for (int i = (int) in.v64(); i != 0; i--)
             rval.put(keyType.readSingleField(in), valueType.readSingleField(in));
         return rval;
+    }
+
+    public void readSingleField(InStream in, Map<K, V> rval) {
+        for (int i = (int) in.v64(); i != 0; i--)
+            rval.put(keyType.readSingleField(in), valueType.readSingleField(in));
     }
 
     @Override
