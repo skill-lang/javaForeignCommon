@@ -10,7 +10,7 @@ import de.ust.skill.common.jforeign.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
-public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
+public final class MapType<K, V> extends CompoundType<Map<K, V>> {
     public final FieldType<K> keyType;
     public final FieldType<V> valueType;
 
@@ -21,8 +21,8 @@ public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
     }
 
     @Override
-    public HashMap<K, V> readSingleField(InStream in) {
-        HashMap<K, V> rval = new HashMap<>();
+    public Map<K, V> readSingleField(InStream in) {
+        Map<K, V> rval = new HashMap<>();
         for (int i = (int) in.v64(); i != 0; i--)
             rval.put(keyType.readSingleField(in), valueType.readSingleField(in));
         return rval;
@@ -34,9 +34,9 @@ public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
     }
 
     @Override
-    public long calculateOffset(Collection<HashMap<K, V>> xs) {
+    public long calculateOffset(Collection<Map<K, V>> xs) {
         long result = 0L;
-        for (HashMap<K, V> x : xs) {
+        for (Map<K, V> x : xs) {
             result += V64.singleV64Offset(x.size());
             result += keyType.calculateOffset(x.keySet());
             result += valueType.calculateOffset(x.values());
@@ -46,7 +46,7 @@ public final class MapType<K, V> extends CompoundType<HashMap<K, V>> {
     }
 
     @Override
-    public void writeSingleField(HashMap<K, V> data, OutStream out) throws IOException {
+    public void writeSingleField(Map<K, V> data, OutStream out) throws IOException {
         out.v64(data.size());
         for (Entry<K, V> e : data.entrySet()) {
             keyType.writeSingleField(e.getKey(), out);

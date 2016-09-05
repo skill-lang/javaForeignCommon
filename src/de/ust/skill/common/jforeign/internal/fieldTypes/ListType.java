@@ -6,14 +6,14 @@ import java.util.List;
 import de.ust.skill.common.jforeign.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
 
-public final class ListType<T> extends SingleArgumentType<LinkedList<T>, T> {
+public final class ListType<T> extends SingleArgumentType<List<T>, T> {
 
     public ListType(FieldType<T> groundType) {
         super(18, groundType);
     }
 
     @Override
-    public LinkedList<T> readSingleField(InStream in) {
+    public List<T> readSingleField(InStream in) {
         LinkedList<T> rval = new LinkedList<>();
         for (int i = (int) in.v64(); i != 0; i--)
             rval.add(groundType.readSingleField(in));
