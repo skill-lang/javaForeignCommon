@@ -10,7 +10,7 @@ import de.ust.skill.common.jforeign.internal.FieldType;
 import de.ust.skill.common.jvm.streams.InStream;
 import de.ust.skill.common.jvm.streams.OutStream;
 
-public final class MapType<K, V> extends CompoundType<Map<K, V>> {
+public final class MapType<K, V, T extends Map<K,V>> extends CompoundType<T> {
     public final FieldType<K> keyType;
     public final FieldType<V> valueType;
 
@@ -21,8 +21,8 @@ public final class MapType<K, V> extends CompoundType<Map<K, V>> {
     }
 
     @Override
-    public Map<K, V> readSingleField(InStream in) {
-        Map<K, V> rval = new HashMap<>();
+    public T readSingleField(InStream in) {
+        T rval = (T) new HashMap<K, V>();
         for (int i = (int) in.v64(); i != 0; i--)
             rval.put(keyType.readSingleField(in), valueType.readSingleField(in));
         return rval;
@@ -34,7 +34,7 @@ public final class MapType<K, V> extends CompoundType<Map<K, V>> {
     }
 
     @Override
-    public long calculateOffset(Collection<Map<K, V>> xs) {
+    public long calculateOffset(Collection<T> xs) {
         long result = 0L;
         for (Map<K, V> x : xs) {
             result += V64.singleV64Offset(x.size());
@@ -46,7 +46,7 @@ public final class MapType<K, V> extends CompoundType<Map<K, V>> {
     }
 
     @Override
-    public void writeSingleField(Map<K, V> data, OutStream out) throws IOException {
+    public void writeSingleField(T data, OutStream out) throws IOException {
         out.v64(data.size());
         for (Entry<K, V> e : data.entrySet()) {
             keyType.writeSingleField(e.getKey(), out);
@@ -63,8 +63,8 @@ public final class MapType<K, V> extends CompoundType<Map<K, V>> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof MapType<?, ?>)
-            return keyType.equals(((MapType<?, ?>) obj).keyType) && valueType.equals(((MapType<?, ?>) obj).valueType);
+        if (obj instanceof MapType<?, ?, ?>)
+            return keyType.equals(((MapType<?, ?, ?>) obj).keyType) && valueType.equals(((MapType<?, ?, ?>) obj).valueType);
         return false;
     }
 }

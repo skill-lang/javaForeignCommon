@@ -180,8 +180,8 @@ abstract public class SerializationFunctions {
         // case MapType(k, v) ⇒
         case 20:
             out.i8((byte) 0x14);
-            writeType(((MapType<?, ?>) t).keyType, out);
-            writeType(((MapType<?, ?>) t).valueType, out);
+            writeType(((MapType<?, ?, ?>) t).keyType, out);
+            writeType(((MapType<?, ?, ?>) t).valueType, out);
             return;
 
         default:
